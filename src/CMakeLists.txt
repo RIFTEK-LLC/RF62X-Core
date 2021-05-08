@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.13)
 ## LIBRARY-PROJECT
 ## name and version
 ###############################################################################
-project(RF62X-Core VERSION 1.4.0 LANGUAGES C)
+project(RF62X-Core VERSION 2.7.0 LANGUAGES C)
 
 
 
