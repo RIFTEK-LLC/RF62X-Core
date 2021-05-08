@@ -18,6 +18,15 @@ void delay(unsigned int mseconds)
     while (goal > clock() * (1000.0 /CLOCKS_PER_SEC));
 }
 
+/**
+ * @brief generate_config_string - generate config string
+ * @return config string.
+ */
+char* generate_config_string(
+        uint32_t host_device_uid, char* host_ip_addr, char* dst_ip_addr,
+        uint32_t host_udp_port, uint32_t dst_udp_port, uint32_t socket_timeout,
+        uint32_t max_packet_size, uint32_t max_data_size);
+
 int answ_count = 0;
 vector_t *search_result = NULL;
 
@@ -279,22 +288,26 @@ rfBool rf627_smart_connect(rf627_smart_t* scanner)
     rfUint16 recv_port;
     rfInt nret;
 
-    char config[1024];
 
-    sprintf(config, "-dst_ip_addr %s "
-                    "-host_ip_addr %s "
-                    "-in_udp_port %d "
-                    "-max_packet_size 65535 "
-                    "-out_udp_port %d "
-                    "-socket_timeout 100 "
-                    "-max_data_size 20000000",
-            scanner->info_by_service_protocol.user_network_ip,
-            scanner->info_by_service_protocol.user_network_hostIP,
-            scanner->info_by_service_protocol.user_network_servicePort,
-            scanner->info_by_service_protocol.user_network_servicePort);
+    uint32_t host_device_uid = 777;
+    uint32_t host_udp_port = 0;
+    uint32_t socket_timeout = 100;
+    uint32_t max_packet_size = 65535;
+    uint32_t max_data_size = 20000000;
+
+    char* config = generate_config_string(
+                    host_device_uid,
+                    scanner->info_by_service_protocol.user_network_hostIP,
+                    scanner->info_by_service_protocol.user_network_ip,
+                    host_udp_port,
+                    scanner->info_by_service_protocol.user_network_servicePort, socket_timeout,
+                    max_packet_size, max_data_size);
+
+    uint8_t is_init = RF62X_channel_init(&scanner->channel, config);
+    free(config);
 
 
-    if (RF62X_channel_init(&scanner->channel, config))
+    if (is_init)
     {
         scanner->m_data_sock =
                 network_platform.network_methods.create_udp_socket();
@@ -683,25 +696,27 @@ uint8_t rf627_smart_search_by_service_protocol(vector_t *scanner_list, rfUint32 
         free (search_result); search_result = NULL;
     }
     search_result = scanner_list;
-    unsigned char bytes[4];
-    bytes[0] = ip_addr & 0xFF;
-    bytes[1] = (ip_addr >> 8) & 0xFF;
-    bytes[2] = (ip_addr >> 16) & 0xFF;
-    bytes[3] = (ip_addr >> 24) & 0xFF;
 
-    char config[1024];
-    sprintf(config, "-dst_ip_addr %d.%d.%d.%d "
-                    "-host_ip_addr %d.%d.%d.%d "
-                    "-in_udp_port 50011 "
-                    "-max_packet_size 65535 "
-                    "-out_udp_port 50011 "
-                    "-socket_timeout 100 "
-                    "-max_data_size 20000000",
-            bytes[3], bytes[2], bytes[1], 255,
-            bytes[3], bytes[2], bytes[1], bytes[0]);
+    uint32_t host_device_uid = 777;
+    char* host_ip_addr = NULL;
+    uint32_to_ip_string(ip_addr, &host_ip_addr);
+    char* dst_ip_addr = NULL;
+    uint32_to_ip_string(((uint32_t)(ip_addr) | 0xFF), &dst_ip_addr);
+    uint32_t host_udp_port = 0;
+    uint32_t dst_udp_port = 50011;
+    uint32_t socket_timeout = 100;
+    uint32_t max_packet_size = 65535;
+    uint32_t max_data_size = 20000000;
+
+    char* config = generate_config_string(
+                    host_device_uid, host_ip_addr, dst_ip_addr,
+                    host_udp_port, dst_udp_port, socket_timeout,
+                    max_packet_size, max_data_size);
 
     RF62X_channel_t channel;
     rfBool is_inited = RF62X_channel_init(&channel, config);
+
+    free(host_ip_addr); free(dst_ip_addr); free(config);
 
     if (is_inited == TRUE)
     {
@@ -3777,3 +3792,26 @@ rfBool rf627_smart_set_calibration_table(rf627_smart_t* scanner, rf627_smart_cal
 
     return TRUE;
 }
+
+char* generate_config_string(
+        uint32_t host_device_uid, char* host_ip_addr, char* dst_ip_addr,
+        uint32_t host_udp_port, uint32_t dst_udp_port, uint32_t socket_timeout,
+        uint32_t max_packet_size, uint32_t max_data_size)
+{
+    char* config = calloc(1024, sizeof (char));
+
+    sprintf(config,
+            "--host_device_uid %d "
+            "--host_ip_addr %s "
+            "--dst_ip_addr %s "
+            "--host_udp_port %d "
+            "--dst_udp_port %d "
+            "--socket_timeout %d "
+            "--max_packet_size %d "
+            "--max_data_size %d",
+            host_device_uid, host_ip_addr, dst_ip_addr, host_udp_port, dst_udp_port,
+            socket_timeout, max_packet_size, max_data_size);
+
+    return config;
+}
+

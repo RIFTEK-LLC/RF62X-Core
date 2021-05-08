@@ -2,7 +2,7 @@
 #include "endian_conv.h"
 
 
-#define CORE_VERSION "2.7.0"
+#define CORE_VERSION "2.7.1"
 
 rfChar* core_version()
 {

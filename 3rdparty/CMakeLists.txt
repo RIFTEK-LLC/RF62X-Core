@@ -68,6 +68,11 @@ endif()
 ## INCLUDING SUBDIRECTORIES
 ## Adding subdirectories according to the 3rd-party configuration
 ###############################################################################
+# RF-PlatformUtils
+if (${PARENT}_RF_PLATFORM_UILS)
+    add_subdirectory(RF-PlatformUtils)
+endif()
+
 # RF627-Protocol
 if(${PARENT}_RF627_PROTOCOL_SUBMODULE)
     add_subdirectory(RF627-Protocol)
@@ -77,9 +82,3 @@ endif()
 if(${PARENT}_RF62X_PROTOCOL_SUBMODULE)
     add_subdirectory(RF62X-Protocol)
 endif()
-
-# RF-PlatformUtils
-if (${PARENT}_RF_PLATFORM_UILS)
-    add_subdirectory(RF-PlatformUtils)
-endif()
-

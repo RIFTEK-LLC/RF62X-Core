@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.13)
 ## LIBRARY-PROJECT
 ## name and version
 ###############################################################################
-project(RF62X-Core VERSION 2.7.0 LANGUAGES C)
+project(RF62X-Core VERSION 2.7.1 LANGUAGES C)
 
 
 
@@ -57,5 +57,5 @@ target_link_libraries(${PROJECT_NAME} platform_methods)
 target_link_libraries(${PROJECT_NAME} endian_conv)
 target_link_libraries(${PROJECT_NAME} custom_vector)
 target_link_libraries(${PROJECT_NAME} custom_string)
-target_link_libraries(${PROJECT_NAME} sundbox)
+target_link_libraries(${PROJECT_NAME} sandbox)
 
