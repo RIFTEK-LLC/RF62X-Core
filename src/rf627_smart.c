@@ -297,7 +297,7 @@ rfBool rf627_smart_connect(rf627_smart_t* scanner)
 
     char* config = generate_config_string(
                     host_device_uid,
-                    scanner->info_by_service_protocol.user_network_hostIP,
+                    "127.0.0.1",//scanner->info_by_service_protocol.user_network_hostIP,
                     scanner->info_by_service_protocol.user_network_ip,
                     host_udp_port,
                     scanner->info_by_service_protocol.user_network_servicePort, socket_timeout,
