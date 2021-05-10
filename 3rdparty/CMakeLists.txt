@@ -54,11 +54,11 @@ if (${PARENT}_RF_PLATFORM_UILS)
     SET(${PARENT}_CUSTOM_VECTOR                         ON CACHE BOOL "" FORCE)
     # custom_string
     SET(${PARENT}_CUSTOM_STRING                         ON CACHE BOOL "" FORCE)
-    # pthreads-c
+    # pthreads4w
     SET(${PARENT}_PTHREADS4W                            OFF CACHE BOOL "" FORCE)
     # getopt
     SET(${PARENT}_GETOPT                                OFF CACHE BOOL "" FORCE)
-    # getopt
+    # sandbox
     SET(${PARENT}_SANDBOX                               ON CACHE BOOL "" FORCE)
 endif()
 
@@ -70,6 +70,10 @@ endif()
 ###############################################################################
 # RF-PlatformUtils
 if (${PARENT}_RF_PLATFORM_UILS)
+    if (MSVC)
+        SET(${PARENT}_PTHREADS4W    ON CACHE BOOL "" FORCE)
+        SET(${PARENT}_GETOPT        ON CACHE BOOL "" FORCE)
+    endif()
     add_subdirectory(RF-PlatformUtils)
 endif()
 

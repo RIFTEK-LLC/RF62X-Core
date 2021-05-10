@@ -59,3 +59,8 @@ target_link_libraries(${PROJECT_NAME} custom_vector)
 target_link_libraries(${PROJECT_NAME} custom_string)
 target_link_libraries(${PROJECT_NAME} sandbox)
 
+if (MSVC)
+    target_link_libraries(${PROJECT_NAME} libpthreads4w)
+    target_link_libraries(${PROJECT_NAME} getopt)
+endif()
+
