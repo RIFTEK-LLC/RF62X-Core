@@ -336,6 +336,24 @@ rf627_smart_frame_t* rf627_smart_get_frame(
 
 
 /**
+ * @brief rf627_smart_get_dumps_profiles_by_service_protocol - Get
+ * dumps profiles from scanner
+ *
+ * @param scanner - ptr to scanner
+ * @param index Start number of the requested profile from memory
+ * @param count The count of requested profiles
+ * @param timeout to get
+ * @param[out] profile_array Ptr to profile's array
+ * @param[out] array_count Count of profiles in array
+ * @param dump_unit_size Dump uint size per line
+ * @return true on success
+ */
+rfBool rf627_smart_get_dumps_profiles_by_service_protocol(
+        rf627_smart_t* scanner, uint32_t index, uint32_t count, rfUint32 timeout,
+        rf627_profile2D_t** profile_array, uint32_t* array_count,
+        uint32_t dump_unit_size);
+
+/**
  * @brief rf627_smart_get_authorization_token_by_service_protocol - Get
  * authorization token from scanner
  *

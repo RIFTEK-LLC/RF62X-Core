@@ -196,6 +196,11 @@ API_EXPORT rfUint8 send_command(
 API_EXPORT rfUint8 send_command2(
         scanner_base_t *device, command2_t* command);
 
+API_EXPORT rfUint8 get_dumps_profiles_from_scanner(
+        scanner_base_t *device, uint32_t index, uint32_t count,
+        uint32_t timeout, protocol_types_t protocol,
+        rf627_profile2D_t** dump, uint32_t* dump_size, uint32_t dump_unit_size);
+
 API_EXPORT rfUint8 get_authorization_token_from_scanner(
         scanner_base_t *device, char** token, uint32_t* token_size, uint32_t timeout, protocol_types_t protocol);
 

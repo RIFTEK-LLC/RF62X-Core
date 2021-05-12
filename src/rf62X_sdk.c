@@ -932,6 +932,53 @@ rfUint8 check_connection_to_scanner(scanner_base_t *device, uint32_t timeout, pr
     return 0;
 }
 
+rfUint8 get_dumps_profiles_from_scanner(
+        scanner_base_t *device, uint32_t index, uint32_t count,
+        uint32_t timeout, protocol_types_t protocol,
+        rf627_profile2D_t** dump, uint32_t* dump_size, uint32_t dump_unit_size)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        switch (protocol) {
+        case kSERVICE:
+        {
+            return FALSE;
+        }
+        case kETHERNET_IP:
+        case kMODBUS_TCP:
+            return FALSE; // RF627-old doesn't support this protocol
+            break;
+        default:
+            return FALSE; // Unknown protocol type
+            break;
+        }
+        break;
+    case kRF627_SMART:
+        switch (protocol) {
+        case kSERVICE:
+        {
+            rfBool result = FALSE;
+            result = rf627_smart_get_dumps_profiles_by_service_protocol(
+                        device->rf627_smart, index, count, timeout,
+                        dump, dump_size, dump_unit_size);
+            return result;
+        }
+        case kETHERNET_IP:
+            break;
+        case kMODBUS_TCP:
+            break;
+        default:
+            return FALSE; // Unknown protocol type
+            break;
+        }
+        break;
+    default:
+        return FALSE; // Unknown device type
+        break;
+    }
+    return FALSE;
+}
+
 rfUint8 get_authorization_token_from_scanner(scanner_base_t *device, char **token, uint32_t* token_size, uint32_t timeout, protocol_types_t protocol)
 {
     switch (device->type) {

@@ -2774,6 +2774,312 @@ rf627_smart_frame_t* rf627_smart_get_frame(rf627_smart_t* scanner, rfUint32 time
     return frame;
 }
 
+
+rfInt8 rf627_smart_get_dumps_profiles_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+{
+    answ_count++;
+    TRACE(TRACE_LEVEL_DEBUG, "+ Get answer to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+           ((RF62X_msg_t*)rqst_msg)->cmd_name, ((RF62X_msg_t*)rqst_msg)->_uid, data_size);
+
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
+
+    for (rfUint32 i = 0; i < vector_count(search_result); i++)
+    {
+        if(((scanner_base_t*)vector_get(search_result, i))->type == kRF627_SMART)
+        {
+            uint32_t serial = ((scanner_base_t*)vector_get(search_result, i))->rf627_smart->info_by_service_protocol.fact_general_serial;
+            if (serial == device_id)
+                existing = TRUE;
+        }
+    }
+
+    if (existing)
+    {
+        RF62X_msg_t* msg = rqst_msg;
+        typedef struct
+        {
+            char* data;
+            uint32_t data_size;
+        }answer;
+
+        if (msg->result == NULL)
+        {
+            msg->result = calloc(1, sizeof (answer));
+            ((answer*)msg->result)->data = calloc(data_size, sizeof (char));
+            memcpy(((answer*)msg->result)->data, data, data_size);
+            ((answer*)msg->result)->data_size = data_size;
+        }
+
+        status = TRUE;
+
+    }
+
+    return status;
+}
+rfInt8 rf627_smart_get_dumps_profiles_timeout_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, "- Get timeout to %s command, rqst-id: %" PRIu64 ".\n",
+           msg->cmd_name, msg->_uid);
+
+    return TRUE;
+}
+rfInt8 rf627_smart_get_dumps_profiles_free_result_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, "- Free result to %s command, rqst-id: %" PRIu64 ".\n",
+           msg->cmd_name, msg->_uid);
+
+    if (msg->result != NULL)
+    {
+        typedef struct
+        {
+            char* data;
+            uint32_t data_size;
+        }answer;
+
+        free(((answer*)msg->result)->data);
+        free(msg->result);
+        msg->result = NULL;
+    }
+
+    return TRUE;
+}
+rfBool rf627_smart_get_dumps_profiles_by_service_protocol(
+        rf627_smart_t* scanner, uint32_t index, uint32_t count,  rfUint32 timeout,
+        rf627_profile2D_t** profile_array, uint32_t* array_count, uint32_t dump_unit_size)
+{
+    // Create payload
+    mpack_writer_t writer;
+    char* payload = NULL;
+    size_t bytes = 0;				///< Number of msg bytes.
+    mpack_writer_init_growable(&writer, &payload, &bytes);
+
+    // Идентификатор сообщения для подтверждения
+    mpack_start_map(&writer, 2);
+    {
+        mpack_write_cstr(&writer, "index");
+        mpack_write_uint(&writer, index);
+
+        mpack_write_cstr(&writer, "count");
+        mpack_write_uint(&writer, count);
+    }mpack_finish_map(&writer);
+
+    // finish writing
+    if (mpack_writer_destroy(&writer) != mpack_ok) {
+        fprintf(stderr, "An error occurred encoding the data!\n");
+        return FALSE;
+    }
+
+    char* cmd_name                      = "GET_DUMP_DATA";
+    char* data                          = payload;
+    uint32_t data_size                  = (rfUint32)bytes;
+    char* data_type                     = "mpack";
+    uint8_t is_check_crc                = FALSE;
+    uint8_t is_confirmation             = TRUE;
+    uint8_t is_one_answ                 = TRUE;
+    uint32_t waiting_time               = timeout;
+    RF62X_answ_callback answ_clb        = rf627_smart_get_dumps_profiles_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_get_dumps_profiles_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_get_dumps_profiles_free_result_callback;
+
+    RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, data, data_size, data_type,
+                                             is_check_crc, is_confirmation, is_one_answ,
+                                             waiting_time,
+                                             answ_clb, timeout_clb, free_clb);
+
+    free(payload);
+
+    // Send test msg
+    if (!RF62X_channel_send_msg(&scanner->channel, msg))
+    {
+        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+    }
+    else
+    {
+        TRACE(TRACE_LEVEL_DEBUG, "%s", "Requests were sent.\n");
+    }
+
+    void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+    if (result != NULL)
+    {
+        typedef struct
+        {
+            char* data;
+            uint32_t data_size;
+        }answer;
+
+        *array_count = ((answer*)result)->data_size / dump_unit_size;
+        *profile_array = memory_platform.rf_calloc(*array_count, sizeof (rf627_profile2D_t));
+
+        for (uint32_t i = 0; i < *array_count; i++)
+        {
+            (*profile_array)[i].rf627smart_profile2D =
+                    memory_platform.rf_calloc(1, sizeof(rf627_smart_profile2D_t));
+
+            (*profile_array)[i].type = kRF627_SMART;
+
+            rf627_old_stream_msg_t header_from_msg = rf627_protocol_old_unpack_header_msg_from_profile_packet((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])));
+
+            (*profile_array)[i].rf627smart_profile2D->header.data_type = header_from_msg.data_type;
+            (*profile_array)[i].rf627smart_profile2D->header.flags = header_from_msg.flags;
+            (*profile_array)[i].rf627smart_profile2D->header.device_type = header_from_msg.device_type;
+            (*profile_array)[i].rf627smart_profile2D->header.serial_number = header_from_msg.serial_number;
+            (*profile_array)[i].rf627smart_profile2D->header.system_time = header_from_msg.system_time;
+
+            (*profile_array)[i].rf627smart_profile2D->header.proto_version_major = header_from_msg.proto_version_major;
+            (*profile_array)[i].rf627smart_profile2D->header.proto_version_minor = header_from_msg.proto_version_minor;
+            (*profile_array)[i].rf627smart_profile2D->header.hardware_params_offset = header_from_msg.hardware_params_offset;
+            (*profile_array)[i].rf627smart_profile2D->header.data_offset = header_from_msg.data_offset;
+            (*profile_array)[i].rf627smart_profile2D->header.packet_count = header_from_msg.packet_count;
+            (*profile_array)[i].rf627smart_profile2D->header.measure_count = header_from_msg.measure_count;
+
+            (*profile_array)[i].rf627smart_profile2D->header.zmr = header_from_msg.zmr;
+            (*profile_array)[i].rf627smart_profile2D->header.xemr = header_from_msg.xemr;
+            (*profile_array)[i].rf627smart_profile2D->header.discrete_value = header_from_msg.discrete_value;
+
+            (*profile_array)[i].rf627smart_profile2D->header.exposure_time = header_from_msg.exposure_time;
+            (*profile_array)[i].rf627smart_profile2D->header.laser_value = header_from_msg.laser_value;
+            (*profile_array)[i].rf627smart_profile2D->header.step_count = header_from_msg.step_count;
+            (*profile_array)[i].rf627smart_profile2D->header.dir = header_from_msg.dir;
+            (*profile_array)[i].rf627smart_profile2D->header.payload_size = header_from_msg.payload_size;
+            (*profile_array)[i].rf627smart_profile2D->header.bytes_per_point = header_from_msg.bytes_per_point;
+
+            if((*profile_array)[i].rf627smart_profile2D->header.serial_number == scanner->info_by_service_protocol.fact_general_serial)
+            {
+                rfInt16 x;
+                rfUint16 z;
+
+                rfUint32 pt_count;
+                switch ((*profile_array)[i].rf627smart_profile2D->header.data_type)
+                {
+                case DTY_PixelsNormal:
+                    pt_count = (*profile_array)[i].rf627smart_profile2D->header.payload_size / (*profile_array)[i].rf627smart_profile2D->header.bytes_per_point;
+                    (*profile_array)[i].rf627smart_profile2D->pixels_format.pixels_count = 0;
+                    (*profile_array)[i].rf627smart_profile2D->pixels_format.pixels =
+                            memory_platform.rf_calloc(pt_count, sizeof (rfUint16));
+                    if ((*profile_array)[i].rf627smart_profile2D->header.flags & 0x01){
+                        (*profile_array)[i].rf627smart_profile2D->intensity_count = 0;
+                        (*profile_array)[i].rf627smart_profile2D->intensity =
+                                memory_platform.rf_calloc(pt_count, sizeof (rfUint8));
+                    }
+                    break;
+                case DTY_ProfileNormal:
+                    pt_count = (*profile_array)[i].rf627smart_profile2D->header.payload_size / (*profile_array)[i].rf627smart_profile2D->header.bytes_per_point;
+                    (*profile_array)[i].rf627smart_profile2D->profile_format.points_count = 0;
+                    (*profile_array)[i].rf627smart_profile2D->profile_format.points =
+                            memory_platform.rf_calloc(pt_count, sizeof (rf627_old_point2D_t));
+                    if ((*profile_array)[i].rf627smart_profile2D->header.flags & 0x01){
+                        (*profile_array)[i].rf627smart_profile2D->intensity_count = 0;
+                        (*profile_array)[i].rf627smart_profile2D->intensity =
+                                memory_platform.rf_calloc(pt_count, sizeof (rfUint8));
+                    }
+                    break;
+                case DTY_PixelsInterpolated:
+                    pt_count = (*profile_array)[i].rf627smart_profile2D->header.payload_size / (*profile_array)[i].rf627smart_profile2D->header.bytes_per_point;
+                    (*profile_array)[i].rf627smart_profile2D->pixels_format.pixels_count = 0;
+                    (*profile_array)[i].rf627smart_profile2D->pixels_format.pixels =
+                            memory_platform.rf_calloc(pt_count, sizeof (rfUint16));
+                    if ((*profile_array)[i].rf627smart_profile2D->header.flags & 0x01){
+                        (*profile_array)[i].rf627smart_profile2D->intensity_count = 0;
+                        (*profile_array)[i].rf627smart_profile2D->intensity =
+                                memory_platform.rf_calloc(pt_count, sizeof (rfUint8));
+                    }
+                    break;
+                case DTY_ProfileInterpolated:
+                    pt_count = (*profile_array)[i].rf627smart_profile2D->header.payload_size / (*profile_array)[i].rf627smart_profile2D->header.bytes_per_point;
+                    (*profile_array)[i].rf627smart_profile2D->profile_format.points_count = 0;
+                    (*profile_array)[i].rf627smart_profile2D->profile_format.points =
+                            memory_platform.rf_calloc(pt_count, sizeof (rf627_old_point2D_t));
+                    if ((*profile_array)[i].rf627smart_profile2D->header.flags & 0x01){
+                        (*profile_array)[i].rf627smart_profile2D->intensity_count = 0;
+                        (*profile_array)[i].rf627smart_profile2D->intensity =
+                                memory_platform.rf_calloc(pt_count, sizeof (rfUint8));
+                    }
+                    break;
+                }
+
+                rfUint32 profile_header_size =
+                        rf627_protocol_old_get_size_of_response_profile_header_packet();
+                rfBool zero_points = TRUE;
+
+                for (rfUint32 ii=0; ii<pt_count; ii++)
+                {
+                    rf627_old_point2D_t pt;
+                    switch ((*profile_array)[i].rf627smart_profile2D->header.data_type)
+                    {
+                    case DTY_ProfileNormal:
+                    case DTY_ProfileInterpolated:
+                        z = *(rfUint16*)(&((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + ii*4 + 2]);
+                        x = *(rfInt16*)(&((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + ii*4]);
+                        if (zero_points == 0 && z > 0 && x != 0)
+                        {
+                            pt.x = (rfFloat)((rfDouble)(x) * (rfDouble)((*profile_array)[i].rf627smart_profile2D->header.xemr) /
+                                    (rfDouble)((*profile_array)[i].rf627smart_profile2D->header.discrete_value));
+                            pt.z = (rfFloat)((rfDouble)(z) * (rfDouble)((*profile_array)[i].rf627smart_profile2D->header.zmr) /
+                                    (rfDouble)((*profile_array)[i].rf627smart_profile2D->header.discrete_value));
+
+                            (*profile_array)[i].rf627smart_profile2D->profile_format.points[(*profile_array)[i].rf627smart_profile2D->profile_format.points_count] = pt;
+                            (*profile_array)[i].rf627smart_profile2D->profile_format.points_count++;
+                            if ((*profile_array)[i].rf627smart_profile2D->header.flags & 0x01)
+                            {
+                                (*profile_array)[i].rf627smart_profile2D->intensity[(*profile_array)[i].rf627smart_profile2D->intensity_count] = ((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + pt_count*4 + ii];
+                                (*profile_array)[i].rf627smart_profile2D->intensity_count++;
+                            }
+                        }else if(zero_points != 0)
+                        {
+                            pt.x = (rfFloat)((rfDouble)(x) * (rfDouble)((*profile_array)[i].rf627smart_profile2D->header.xemr) /
+                                    (rfDouble)((*profile_array)[i].rf627smart_profile2D->header.discrete_value));
+                            pt.z = (rfFloat)((rfDouble)(z) * (rfDouble)((*profile_array)[i].rf627smart_profile2D->header.zmr) /
+                                    (rfDouble)((*profile_array)[i].rf627smart_profile2D->header.discrete_value));
+
+                            (*profile_array)[i].rf627smart_profile2D->profile_format.points[(*profile_array)[i].rf627smart_profile2D->profile_format.points_count] = pt;
+                            (*profile_array)[i].rf627smart_profile2D->profile_format.points_count++;
+                            if ((*profile_array)[i].rf627smart_profile2D->header.flags & 0x01)
+                            {
+                                (*profile_array)[i].rf627smart_profile2D->intensity[(*profile_array)[i].rf627smart_profile2D->intensity_count] = ((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + pt_count*4 + ii];
+                                (*profile_array)[i].rf627smart_profile2D->intensity_count++;
+                            }
+                        }
+                        break;
+                    case DTY_PixelsNormal:
+                    case DTY_PixelsInterpolated:
+                        z = *(rfUint16*)(&((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + ii*2]);
+                        //pt.x = i;
+
+                        (*profile_array)[i].rf627smart_profile2D->pixels_format.pixels[(*profile_array)[i].rf627smart_profile2D->pixels_format.pixels_count] = z;
+                        (*profile_array)[i].rf627smart_profile2D->pixels_format.pixels_count++;
+                        if ((*profile_array)[i].rf627smart_profile2D->header.flags & 0x01)
+                        {
+                            (*profile_array)[i].rf627smart_profile2D->intensity[(*profile_array)[i].rf627smart_profile2D->intensity_count] = ((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + pt_count*4 + ii];
+                            (*profile_array)[i].rf627smart_profile2D->intensity_count++;
+                        }
+
+                        //pt.z = (rfDouble)(z) / (rfDouble)(profile->header.discrete_value);
+
+                        break;
+                    }
+
+                }
+            }
+        }
+
+        // Cleanup test msg
+        RF62X_cleanup_msg(msg);
+        free(msg); msg = NULL;
+        return TRUE;
+    }else
+    {
+        TRACE(TRACE_LEVEL_WARNING, "%s", "No response to SET_AUTHORIZATION_KEY request!\n");
+    }
+
+    return FALSE;
+}
+
+
 rfInt8 rf627_smart_get_authorization_token_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
 {
     answ_count++;
