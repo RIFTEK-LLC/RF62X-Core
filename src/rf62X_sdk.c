@@ -1410,3 +1410,39 @@ void free_scanner(scanner_base_t *device)
         break;
     }
 }
+
+void free_profile2D(rf627_profile2D_t *_profile)
+{
+    if (_profile != NULL)
+    {
+        switch (_profile->type) {
+        case kRF627_OLD:
+        {
+            if(_profile->rf627old_profile2D != NULL)
+            {
+                free(_profile->rf627old_profile2D->intensity);
+                _profile->rf627old_profile2D->intensity = NULL;
+                free(_profile->rf627old_profile2D->pixels_format.pixels);
+                _profile->rf627old_profile2D->pixels_format.pixels = NULL;
+                free(_profile->rf627old_profile2D);
+                _profile->rf627old_profile2D = NULL;
+            }
+            break;
+        }
+        case kRF627_SMART:
+        {
+            if(_profile->rf627smart_profile2D != NULL)
+            {
+                free(_profile->rf627smart_profile2D->intensity);
+                _profile->rf627smart_profile2D->intensity = NULL;
+                free(_profile->rf627smart_profile2D->pixels_format.pixels);
+                _profile->rf627smart_profile2D->pixels_format.pixels = NULL;
+                free(_profile->rf627smart_profile2D);
+                _profile->rf627smart_profile2D = NULL;
+            }
+            break;
+        }
+        }
+        free(_profile);
+    }
+}

@@ -114,6 +114,8 @@ API_EXPORT void free_scanner(scanner_base_t *device);
 API_EXPORT rf627_profile2D_t* get_profile2D_from_scanner(
         scanner_base_t *device, rfBool zero_points, rfBool realtime, protocol_types_t protocol);
 
+API_EXPORT void free_profile2D(rf627_profile2D_t* profile);
+
 
 API_EXPORT rf627_profile3D_t* get_profile3D_from_scanner(
         scanner_base_t *device, rfFloat step_size, rfFloat k,
