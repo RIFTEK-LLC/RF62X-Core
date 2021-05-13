@@ -321,6 +321,16 @@ rfUint8 rf627_smart_set_parameter(
  */
 rfBool rf627_smart_write_params_to_scanner(
         rf627_smart_t* scanner, rfUint32 timeout);
+/**
+ * @brief rf627_smart_save_params_to_scanner - Save changes to device's memory
+ *
+ * @param scanner - ptr to scanner
+ * @param timeout to save
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_save_params_to_scanner(
+        rf627_smart_t* scanner, rfUint32 timeout);
 
 
 /**
