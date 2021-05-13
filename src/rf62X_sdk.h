@@ -114,6 +114,9 @@ API_EXPORT void free_scanner(scanner_base_t *device);
 API_EXPORT rf627_profile2D_t* get_profile2D_from_scanner(
         scanner_base_t *device, rfBool zero_points, rfBool realtime, protocol_types_t protocol);
 
+API_EXPORT uint8_t send_profile2D_request_to_scanner(
+        scanner_base_t *device, rfUint32 count, protocol_types_t protocol);
+
 API_EXPORT void free_profile2D(rf627_profile2D_t* profile);
 
 
@@ -231,6 +234,9 @@ API_EXPORT rfUint8 set_calibration_table_to_scanner(
 
 API_EXPORT rfUint8 save_calibration_table_to_scanner(
         scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+
+API_EXPORT uint8_t send_reboot_device_request_to_scanner(
+        scanner_base_t *device, protocol_types_t protocol);
 
 
 /*! Return structure containing device information about scanner rf627(smart) version

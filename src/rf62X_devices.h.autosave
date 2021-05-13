@@ -270,24 +270,24 @@ rf627_smart_profile2D_t* rf627_smart_get_profile2D(
         rf627_smart_t* scanner, rfBool zero_points);
 
 /**
- * @brief rf627_smart_send_profile2D_reques_to_scanner - command to start measuring
+ * @brief rf627_smart_send_profile2D_request_to_scanner - command to start measuring
  *
  * @param scanner - ptr to scanner
  * @param count of measurements
  *
  * @return true on success
  */
-rfBool rf627_smart_send_profile2D_reques_to_scanner(
+rfBool rf627_smart_send_profile2D_request_to_scanner(
         rf627_smart_t* scanner, rfUint32 count);
 
 /**
- * @brief rf627_smart_reboot_device_reques_to_scanner - command to restart device
+ * @brief rf627_smart_reboot_device_request_to_scanner - command to restart device
  *
  * @param scanner - ptr to scanner
  *
  * @return true on success
  */
-rfBool rf627_smart_reboot_device_reques_to_scanner(rf627_smart_t* scanner);
+rfBool rf627_smart_reboot_device_request_to_scanner(rf627_smart_t* scanner);
 
 
 /**

@@ -2003,7 +2003,7 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type(parameter_value_types[PVT_UINT]);
-                p->base.name = parameter_names[USER_GENERAL_SAVELOG];
+                p->base.name = parameter_names[USER_GENERAL_LOGSAVEENABLED];
                 p->base.access = patKey[PAT_WRITE];
                 p->base.index = index++;
                 p->base.offset = 64;
@@ -4379,7 +4379,7 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
                 rfUint16 index = 0;
                 parameter_t* p = create_parameter_from_type(parameter_value_types[PVT_UINT]);
-                p->base.name = parameter_names[FACT_GENERAL_DEVICETYPE];
+                p->base.name = parameter_names[FACT_GENERAL_PRODUCTCODE];
                 p->base.access = patKey[PAT_LOCKED];
                 p->base.index = index++;
                 p->base.offset = 0;
@@ -4487,7 +4487,7 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type(parameter_value_types[PVT_UINT]);
-                p->base.name = parameter_names[FACT_GENERAL_FIRMWAREREV];
+                p->base.name = parameter_names[FACT_GENERAL_FIRMWAREVER];
                 p->base.access = patKey[PAT_LOCKED];
                 p->base.index = index++;
                 p->base.offset = 26;
@@ -4504,7 +4504,7 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type(parameter_value_types[PVT_UINT]);
-                p->base.name = parameter_names[FACT_GENERAL_HARDWAREREV];
+                p->base.name = parameter_names[FACT_GENERAL_HARDWAREVER];
                 p->base.access = patKey[PAT_LOCKED];
                 p->base.index = index++;
                 p->base.offset = 30;
@@ -5096,8 +5096,8 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type(parameter_value_types[PVT_UINT]);
-                p->base.name = parameter_names[FACT_PROFILES_MAXDUMPSIZE];
-                p->base.access = patKey[PAT_LOCKED];
+                p->base.name = parameter_names[USER_DUMP_SIZE];
+                p->base.access = patKey[PAT_WRITE];
                 p->base.index = index++;
                 p->base.offset = 809;
                 p->base.size = sizeof(scanner->factory_params.profiles.max_dump_size);

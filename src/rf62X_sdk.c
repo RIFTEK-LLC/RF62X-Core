@@ -1485,3 +1485,81 @@ void free_profile2D(rf627_profile2D_t *_profile)
         free(_profile);
     }
 }
+
+uint8_t send_profile2D_request_to_scanner(scanner_base_t *device, rfUint32 count, protocol_types_t protocol)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        switch (protocol) {
+        case kSERVICE:
+//            rf627_old_write_params_to_scanner(device->rf627_old);
+            return FALSE;
+            break;
+        case kETHERNET_IP:
+        case kMODBUS_TCP:
+            return FALSE; // RF627-old doesn't support this protocol
+            break;
+        default:
+            return FALSE; // Unknown protocol type
+            break;
+        }
+        break;
+    case kRF627_SMART:
+        switch (protocol) {
+        case kSERVICE:
+            return rf627_smart_send_profile2D_request_to_scanner(device->rf627_smart, count);
+            break;
+        case kETHERNET_IP:
+            break;
+        case kMODBUS_TCP:
+            break;
+        default:
+            return 1; // Unknown protocol type
+            break;
+        }
+        break;
+    default:
+        return 2; // Unknown device type
+        break;
+    }
+    return 0;
+}
+
+uint8_t send_reboot_device_request_to_scanner(scanner_base_t *device, protocol_types_t protocol)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        switch (protocol) {
+        case kSERVICE:
+//            rf627_old_write_params_to_scanner(device->rf627_old);
+            return FALSE;
+            break;
+        case kETHERNET_IP:
+        case kMODBUS_TCP:
+            return FALSE; // RF627-old doesn't support this protocol
+            break;
+        default:
+            return FALSE; // Unknown protocol type
+            break;
+        }
+        break;
+    case kRF627_SMART:
+        switch (protocol) {
+        case kSERVICE:
+            return rf627_smart_reboot_device_request_to_scanner(device->rf627_smart);
+            break;
+        case kETHERNET_IP:
+            break;
+        case kMODBUS_TCP:
+            break;
+        default:
+            return 1; // Unknown protocol type
+            break;
+        }
+        break;
+    default:
+        return 2; // Unknown device type
+        break;
+    }
+    return 0;
+}

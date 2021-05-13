@@ -4452,7 +4452,7 @@ rfInt8 rf627_smart_reboot_device_free_result_callback(void* rqst_msg)
 
     return TRUE;
 }
-rfBool rf627_smart_reboot_device_reques_to_scanner(rf627_smart_t* scanner)
+rfBool rf627_smart_reboot_device_request_to_scanner(rf627_smart_t* scanner)
 {
     char* cmd_name                      = "REBOOT_DEVICE";
     char* data                          = NULL;
