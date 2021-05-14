@@ -3866,7 +3866,7 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
 
     scanner->calib_table.m_Serial = scanner->info_by_service_protocol.fact_general_serial;
     scanner->calib_table.m_CRC16 = 0;
-    scanner->calib_table.m_Type = 0x03;
+    scanner->calib_table.m_Type = 0x04;
 
     parameter_t* width = rf627_smart_get_parameter(scanner, "fact_sensor_width");
     parameter_t* height = rf627_smart_get_parameter(scanner, "fact_sensor_height");
@@ -3942,7 +3942,7 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
 
             scanner->calib_table.m_Serial = answ->m_Serial;
             scanner->calib_table.m_CRC16 = 0;
-            scanner->calib_table.m_Type = 0x03;
+            scanner->calib_table.m_Type = 0x04;
             scanner->calib_table.m_DataRowLength = answ->m_DataRowLength;
             scanner->calib_table.m_Width = answ->m_Width;
             scanner->calib_table.m_Height = answ->m_Height;
@@ -3969,7 +3969,7 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
 
             scanner->calib_table.m_Serial = scanner->info_by_service_protocol.fact_general_serial;
             scanner->calib_table.m_CRC16 = 0;
-            scanner->calib_table.m_Type = 0x03;
+            scanner->calib_table.m_Type = 0x04;
 
             parameter_t* width = rf627_smart_get_parameter(scanner, "fact_sensor_width");
             parameter_t* height = rf627_smart_get_parameter(scanner, "fact_sensor_height");
@@ -4003,7 +4003,7 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
 
         scanner->calib_table.m_Serial = scanner->info_by_service_protocol.fact_general_serial;
         scanner->calib_table.m_CRC16 = 0;
-        scanner->calib_table.m_Type = 0x03;
+        scanner->calib_table.m_Type = 0x04;
 
         parameter_t* width = rf627_smart_get_parameter(scanner, "fact_sensor_width");
         parameter_t* height = rf627_smart_get_parameter(scanner, "fact_sensor_height");
@@ -4126,9 +4126,9 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
 {
     // Create payload
     mpack_writer_t writer;
-    char* payload = NULL;
-    size_t bytes = 0;				///< Number of msg bytes.
-    mpack_writer_init_growable(&writer, &payload, &bytes);
+    char* header = NULL;
+    size_t header_size = 0;				///< Number of msg bytes.
+    mpack_writer_init_growable(&writer, &header, &header_size);
 
     // Идентификатор сообщения для подтверждения
     mpack_start_map(&writer, 10);
@@ -4141,6 +4141,9 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
 
         mpack_write_cstr(&writer, "serial");
         mpack_write_uint(&writer, scanner->calib_table.m_Serial);
+
+        mpack_write_cstr(&writer, "data_size");
+        mpack_write_uint(&writer, scanner->calib_table.m_DataSize);
 
         mpack_write_cstr(&writer, "data_row_length");
         mpack_write_uint(&writer, scanner->calib_table.m_DataRowLength);
@@ -4160,8 +4163,8 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
         mpack_write_cstr(&writer, "time_stamp");
         mpack_write_int(&writer, scanner->calib_table.m_TimeStamp);
 
-        mpack_write_cstr(&writer, "data");
-        mpack_write_bin(&writer, (const char*)scanner->calib_table.m_Data, scanner->calib_table.m_DataSize);
+        //        mpack_write_cstr(&writer, "data");
+        //        mpack_write_bin(&writer, (const char*)scanner->calib_table.m_Data, scanner->calib_table.m_DataSize);
     }mpack_finish_map(&writer);
 
     // finish writing
@@ -4170,10 +4173,21 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
         return FALSE;
     }
 
+    uint32_t trail_size = (header_size % 8) == 0 ? 0 : (8 - header_size % 8);
+    uint32_t payload_size = 8 + header_size + trail_size + scanner->calib_table.m_DataSize;
+    char* payload = calloc(payload_size, sizeof (char));
+
+    uint32_t info_size = header_size;
+    uint32_t data_offset = 8 + header_size + trail_size;
+    memcpy(payload, (char*)&info_size, 4);
+    memcpy(&payload[4], (char*)&data_offset, 4);
+    memcpy(&payload[8], header, header_size);
+    memcpy(&payload[8 + header_size + trail_size], scanner->calib_table.m_Data, scanner->calib_table.m_DataSize);
+
 
     char* cmd_name                      = "SET_CALIBRATION_DATA";
     char* data                          = payload;
-    uint32_t data_size                  = (rfUint32)bytes;
+    uint32_t data_size                  = payload_size;
     char* data_type                     = "blob";
     uint8_t is_check_crc                = TRUE;
     uint8_t is_confirmation             = TRUE;
@@ -4188,7 +4202,9 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
                                              waiting_time,
                                              answ_clb, timeout_clb, free_clb);
 
+    free(header);
     free(payload);
+
 
     // Send test msg
     if (!RF62X_channel_send_msg(&scanner->channel, msg))
@@ -4200,7 +4216,7 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
         TRACE(TRACE_LEVEL_DEBUG, "%s", "Requests were sent.\n");
     }
 
-    void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+    void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, 1000);
     if (result != NULL)
     {
         typedef struct

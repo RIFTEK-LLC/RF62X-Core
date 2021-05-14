@@ -1256,7 +1256,6 @@ rfUint8 write_calibration_table_to_scanner(scanner_base_t *device, uint32_t time
         case kSERVICE:
         {
             rfBool result = FALSE;
-            timeout = 0;
             result = rf627_smart_write_calibration_data_by_service_protocol(device->rf627_smart, timeout);
             return result;
         }
@@ -1321,114 +1320,132 @@ rfUint8 save_calibration_table_to_scanner(scanner_base_t *device, uint32_t timeo
 rfBool convert_calibration_table_to_bytes(rf627_calib_table_t* table, char** bytes, uint32_t* data_size)
 {
     // Create calib_file
-    mpack_writer_t writer;
-    char* calib_file = NULL;
-    size_t calib_file_size = 0;
-    mpack_writer_init_growable(&writer, &calib_file, &calib_file_size);
+        mpack_writer_t writer;
+        char* header = NULL;
+        size_t header_size = 0;
+        mpack_writer_init_growable(&writer, &header, &header_size);
 
-    // Идентификатор сообщения для подтверждения
-    mpack_start_map(&writer, 10);
-    {
-        mpack_write_cstr(&writer, "type");
-        mpack_write_uint(&writer, table->rf627smart_calib_table->m_Type);
+        // Идентификатор сообщения для подтверждения
+        mpack_start_map(&writer, 10);
+        {
+            mpack_write_cstr(&writer, "type");
+            mpack_write_uint(&writer, table->rf627smart_calib_table->m_Type);
 
-        mpack_write_cstr(&writer, "crc");
-        mpack_write_uint(&writer, table->rf627smart_calib_table->m_CRC16);
+            mpack_write_cstr(&writer, "crc");
+            mpack_write_uint(&writer, table->rf627smart_calib_table->m_CRC16);
 
-        mpack_write_cstr(&writer, "serial");
-        mpack_write_uint(&writer, table->rf627smart_calib_table->m_Serial);
+            mpack_write_cstr(&writer, "serial");
+            mpack_write_uint(&writer, table->rf627smart_calib_table->m_Serial);
 
-        mpack_write_cstr(&writer, "data_row_length");
-        mpack_write_uint(&writer, table->rf627smart_calib_table->m_DataRowLength);
+            mpack_write_cstr(&writer, "data_size");
+            mpack_write_uint(&writer, table->rf627smart_calib_table->m_DataSize);
 
-        mpack_write_cstr(&writer, "width");
-        mpack_write_uint(&writer, table->rf627smart_calib_table->m_Width);
+            mpack_write_cstr(&writer, "data_row_length");
+            mpack_write_uint(&writer, table->rf627smart_calib_table->m_DataRowLength);
 
-        mpack_write_cstr(&writer, "height");
-        mpack_write_uint(&writer, table->rf627smart_calib_table->m_Height);
+            mpack_write_cstr(&writer, "width");
+            mpack_write_uint(&writer, table->rf627smart_calib_table->m_Width);
 
-        mpack_write_cstr(&writer, "mult_w");
-        mpack_write_uint(&writer, table->rf627smart_calib_table->m_MultW);
+            mpack_write_cstr(&writer, "height");
+            mpack_write_uint(&writer, table->rf627smart_calib_table->m_Height);
 
-        mpack_write_cstr(&writer, "mult_h");
-        mpack_write_uint(&writer, table->rf627smart_calib_table->m_MultH);
+            mpack_write_cstr(&writer, "mult_w");
+            mpack_write_uint(&writer, table->rf627smart_calib_table->m_MultW);
 
-        mpack_write_cstr(&writer, "time_stamp");
-        mpack_write_int(&writer, table->rf627smart_calib_table->m_TimeStamp);
+            mpack_write_cstr(&writer, "mult_h");
+            mpack_write_uint(&writer, table->rf627smart_calib_table->m_MultH);
 
-        mpack_write_cstr(&writer, "data");
-        mpack_write_bin(&writer, (char*)table->rf627smart_calib_table->m_Data,
-                        table->rf627smart_calib_table->m_DataSize);
-    }mpack_finish_map(&writer);
+            mpack_write_cstr(&writer, "time_stamp");
+            mpack_write_int(&writer, table->rf627smart_calib_table->m_TimeStamp);
 
-    // finish writing
-    if (mpack_writer_destroy(&writer) != mpack_ok) {
-        fprintf(stderr, "An error occurred encoding the data!\n");
-        return FALSE;
-    }
+    //        mpack_write_cstr(&writer, "data");
+    //        mpack_write_bin(&writer, (char*)table->rf627smart_calib_table->m_Data,
+    //                        table->rf627smart_calib_table->m_DataSize);
+        }mpack_finish_map(&writer);
 
-    *data_size = calib_file_size;
-    *bytes = calloc(calib_file_size, sizeof (char));
-    memcpy(*bytes, calib_file, calib_file_size);
-    free(calib_file);
-    return TRUE;
+        // finish writing
+        if (mpack_writer_destroy(&writer) != mpack_ok) {
+            fprintf(stderr, "An error occurred encoding the data!\n");
+            return FALSE;
+        }
+
+        uint32_t trail_size = (header_size % 8) == 0 ? 0 : (8 - header_size % 8);
+        uint32_t calib_file_size = 8 + header_size + trail_size + table->rf627smart_calib_table->m_DataSize;
+        char* calib_file = calloc(calib_file_size, sizeof (char));
+
+        uint32_t info_size = header_size;
+        uint32_t data_offset = 8 + header_size + trail_size;
+        memcpy(calib_file, (char*)&info_size, 4);
+        memcpy(&calib_file[4], (char*)&data_offset, 4);
+        memcpy(&calib_file[8], header, header_size);
+        memcpy(&calib_file[8 + header_size + trail_size], table->rf627smart_calib_table->m_Data,
+                table->rf627smart_calib_table->m_DataSize);
+
+        *data_size = calib_file_size;
+        *bytes = calloc(calib_file_size, sizeof (char));
+        memcpy(*bytes, calib_file, calib_file_size);
+        free(calib_file);
+        return TRUE;
+
 }
 
 rf627_calib_table_t *convert_calibration_table_from_bytes(char *bytes, uint32_t data_size)
 {
     mpack_tree_t tree;
-    mpack_tree_init_data(&tree, (const char*)bytes, data_size);
-    mpack_tree_parse(&tree);
-    if (mpack_tree_error(&tree) != mpack_ok)
-    {
-        mpack_tree_destroy(&tree);
-        return NULL;
-    }
-    mpack_node_t root = mpack_tree_root(&tree);
+        mpack_tree_init_data(&tree, (const char*)&bytes[8], data_size);
+        mpack_tree_parse(&tree);
+        if (mpack_tree_error(&tree) != mpack_ok)
+        {
+            mpack_tree_destroy(&tree);
+            return NULL;
+        }
+        mpack_node_t root = mpack_tree_root(&tree);
 
-    rf627_calib_table_t* _table =
-            (rf627_calib_table_t*)calloc(1, sizeof (rf627_calib_table_t));
+        size_t header_size = tree.size;
+        uint32_t trail_size = (header_size % 8) == 0 ? 0 : (8 - header_size % 8);
 
-    _table->type = kRF627_SMART;
-    _table->rf627smart_calib_table =
-            (rf627_smart_calib_table_t*)calloc(1, sizeof(rf627_smart_calib_table_t));
+        rf627_calib_table_t* _table =
+                (rf627_calib_table_t*)calloc(1, sizeof (rf627_calib_table_t));
 
-    _table->rf627smart_calib_table->m_Type =
-            mpack_node_uint(mpack_node_map_cstr(root, "type"));
+        _table->type = kRF627_SMART;
+        _table->rf627smart_calib_table =
+                (rf627_smart_calib_table_t*)calloc(1, sizeof(rf627_smart_calib_table_t));
 
-    _table->rf627smart_calib_table->m_CRC16 =
-            mpack_node_uint(mpack_node_map_cstr(root, "crc"));
+        _table->rf627smart_calib_table->m_Type =
+                mpack_node_uint(mpack_node_map_cstr(root, "type"));
 
-    _table->rf627smart_calib_table->m_Serial =
-            mpack_node_uint(mpack_node_map_cstr(root, "serial"));
+        _table->rf627smart_calib_table->m_CRC16 =
+                mpack_node_uint(mpack_node_map_cstr(root, "crc"));
 
-    _table->rf627smart_calib_table->m_DataRowLength =
-            mpack_node_uint(mpack_node_map_cstr(root, "data_row_length"));
+        _table->rf627smart_calib_table->m_Serial =
+                mpack_node_uint(mpack_node_map_cstr(root, "serial"));
 
-    _table->rf627smart_calib_table->m_Width =
-            mpack_node_uint(mpack_node_map_cstr(root, "width"));
+        _table->rf627smart_calib_table->m_DataSize =
+                mpack_node_uint(mpack_node_map_cstr(root, "data_size"));
 
-    _table->rf627smart_calib_table->m_Height =
-            mpack_node_uint(mpack_node_map_cstr(root, "height"));
+        _table->rf627smart_calib_table->m_DataRowLength =
+                mpack_node_uint(mpack_node_map_cstr(root, "data_row_length"));
 
-    _table->rf627smart_calib_table->m_MultW =
-            mpack_node_float(mpack_node_map_cstr(root, "mult_w"));
+        _table->rf627smart_calib_table->m_Width =
+                mpack_node_uint(mpack_node_map_cstr(root, "width"));
 
-    _table->rf627smart_calib_table->m_MultH =
-            mpack_node_float(mpack_node_map_cstr(root, "mult_h"));
+        _table->rf627smart_calib_table->m_Height =
+                mpack_node_uint(mpack_node_map_cstr(root, "height"));
 
-    _table->rf627smart_calib_table->m_TimeStamp =
-            mpack_node_int(mpack_node_map_cstr(root, "time_stamp"));
+        _table->rf627smart_calib_table->m_MultW =
+                mpack_node_float(mpack_node_map_cstr(root, "mult_w"));
 
-    _table->rf627smart_calib_table->m_DataSize =
-            mpack_node_bin_size(mpack_node_map_cstr(root, "data"));
+        _table->rf627smart_calib_table->m_MultH =
+                mpack_node_float(mpack_node_map_cstr(root, "mult_h"));
 
-    _table->rf627smart_calib_table->m_Data =
-            (unsigned char*)mpack_node_data_alloc(
-                mpack_node_map_cstr(root, "data"),
-                _table->rf627smart_calib_table->m_DataSize);
+        _table->rf627smart_calib_table->m_TimeStamp =
+                mpack_node_int(mpack_node_map_cstr(root, "time_stamp"));
 
-    return _table;
+        _table->rf627smart_calib_table->m_Data = calloc(_table->rf627smart_calib_table->m_DataSize, sizeof (char));
+         memcpy(_table->rf627smart_calib_table->m_Data, &bytes[8 + header_size + trail_size], _table->rf627smart_calib_table->m_DataSize);
+
+        return _table;
+
 }
 
 void free_scanner(scanner_base_t *device)
