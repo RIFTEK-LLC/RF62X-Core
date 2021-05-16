@@ -4478,9 +4478,9 @@ rfBool rf627_smart_reboot_device_request_to_scanner(rf627_smart_t* scanner)
     uint8_t is_confirmation             = FALSE;
     uint8_t is_one_answ                 = TRUE;
     uint32_t waiting_time               = 1000;
-    RF62X_answ_callback answ_clb        = rf627_smart_save_calibration_data_callback;
-    RF62X_timeout_callback timeout_clb  = rf627_smart_save_calibration_data_timeout_callback;
-    RF62X_free_callback free_clb        = rf627_smart_save_calibration_data_free_result_callback;
+    RF62X_answ_callback answ_clb        = rf627_smart_reboot_device_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_reboot_device_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_reboot_device_free_result_callback;
 
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, data, data_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
