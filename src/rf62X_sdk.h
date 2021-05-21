@@ -183,6 +183,7 @@ API_EXPORT parameter_t* get_parameter(
 API_EXPORT rfUint8 set_parameter(
         scanner_base_t *device, parameter_t* param);
 
+parameter_t* create_parameter_from_type(const rfChar* type);
 /**
  * @brief free_parameter - free parameter
  * @param param: ptr to parameter
