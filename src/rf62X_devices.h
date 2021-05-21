@@ -352,6 +352,30 @@ rfBool rf627_smart_write_params_to_scanner(
 rfBool rf627_smart_save_params_to_scanner(
         rf627_smart_t* scanner, rfUint32 timeout);
 
+/**
+ * @brief rf627_smart_save_recovery_params_to_scanner - Save current params in
+ * the recovery area
+ *
+ * @param scanner - ptr to scanner
+ * @param timeout to save
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_save_recovery_params_to_scanner(
+        rf627_smart_t* scanner, rfUint32 timeout);
+
+/**
+ * @brief rf627_smart_load_recovery_params_from_scanner - Loading device
+ * parameters from the recovery area
+ *
+ * @param scanner - ptr to scanner
+ * @param timeout to load
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_load_recovery_params_from_scanner(
+        rf627_smart_t* scanner, rfUint32 timeout);
+
 
 /**
  * @brief rf627_smart_get_frame - Get frame from scanner

@@ -322,7 +322,7 @@ rf627_profile2D_t* get_profile2D_from_scanner(
                                 ((scanner_base_t*)device)->rf627_smart->m_data_sock);
 
                     network_platform.network_methods.set_socket_recv_timeout(
-                                ((scanner_base_t*)device)->rf627_smart->m_data_sock, 1000);
+                                ((scanner_base_t*)device)->rf627_smart->m_data_sock, 100);
                     //recv_addr.sin_family = RF_AF_INET;
                     recv_port = ((scanner_base_t*)device)->rf627_smart->info_by_service_protocol.user_network_hostPort;
 
@@ -336,7 +336,7 @@ rf627_profile2D_t* get_profile2D_from_scanner(
                     {
                         network_platform.network_methods.close_socket(((scanner_base_t*)device)->rf627_smart->m_data_sock);
                         ((scanner_base_t*)device)->rf627_smart->m_data_sock = NULL;
-                        return NULL;
+                        return profile;
                     }
                 }
             }
@@ -753,6 +753,10 @@ rfUint8 save_params_to_scanner(scanner_base_t *device, uint32_t timeout, protoco
         switch (protocol) {
         case kSERVICE:
             return rf627_smart_save_params_to_scanner(device->rf627_smart, timeout);
+//            if ()
+//                return rf627_smart_save_recovery_params_to_scanner(device->rf627_smart, timeout);
+//            else
+//                return FALSE;
             break;
         case kETHERNET_IP:
             break;
@@ -1564,6 +1568,45 @@ uint8_t send_reboot_device_request_to_scanner(scanner_base_t *device, protocol_t
         switch (protocol) {
         case kSERVICE:
             return rf627_smart_reboot_device_request_to_scanner(device->rf627_smart);
+            break;
+        case kETHERNET_IP:
+            break;
+        case kMODBUS_TCP:
+            break;
+        default:
+            return 1; // Unknown protocol type
+            break;
+        }
+        break;
+    default:
+        return 2; // Unknown device type
+        break;
+    }
+    return 0;
+}
+
+rfUint8 load_recovery_params_from_scanner(scanner_base_t *device, uint32_t timeout, protocol_types_t protocol)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        switch (protocol) {
+        case kSERVICE:
+//            rf627_old_write_params_to_scanner(device->rf627_old);
+            return FALSE;
+            break;
+        case kETHERNET_IP:
+        case kMODBUS_TCP:
+            return FALSE; // RF627-old doesn't support this protocol
+            break;
+        default:
+            return FALSE; // Unknown protocol type
+            break;
+        }
+        break;
+    case kRF627_SMART:
+        switch (protocol) {
+        case kSERVICE:
+            return rf627_smart_load_recovery_params_from_scanner(device->rf627_smart, timeout);
             break;
         case kETHERNET_IP:
             break;

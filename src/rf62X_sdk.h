@@ -157,6 +157,15 @@ API_EXPORT rfUint8 save_params_to_scanner(
         scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
 
 /**
+ * @brief load_recovery_params_from_scanner - Loading parameters from recovery
+ * @param device - ptr to scanner
+ * @param protocol - protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return 0 on success
+ */
+API_EXPORT rfUint8 load_recovery_params_from_scanner(
+        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+
+/**
  * @brief get_parameter - Search parameters by his name
  * @param device - ptr to scanner
  * @param param_name - name of parameter

@@ -317,12 +317,12 @@ rfBool rf627_smart_connect(rf627_smart_t* scanner)
             network_platform.network_methods.set_reuseaddr_socket_option(scanner->m_data_sock);
 
             network_platform.network_methods.set_socket_recv_timeout(
-                        scanner->m_data_sock, 1000);
+                        scanner->m_data_sock, 100);
             //recv_addr.sin_family = RF_AF_INET;
             recv_port = scanner->info_by_service_protocol.user_network_hostPort;
 
             //recv_addr.sin_addr = RF_INADDR_ANY;
-            ip_string_to_uint32("0.0.0.0"/*scanner->info_by_service_protocol.user_network_hostIP*/, &recv_ip_addr);
+            ip_string_to_uint32(scanner->info_by_service_protocol.user_network_hostIP, &recv_ip_addr);
 
             nret = network_platform.network_methods.socket_bind(
                         scanner->m_data_sock, recv_ip_addr, recv_port);
@@ -2918,6 +2918,293 @@ rfBool rf627_smart_save_params_to_scanner(rf627_smart_t* scanner, rfUint32 timeo
 
     return FALSE;
 }
+
+rfInt8 rf627_smart_save_recovery_params_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+{
+    answ_count++;
+    TRACE(TRACE_LEVEL_DEBUG, "+ Get answer to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+           ((RF62X_msg_t*)rqst_msg)->cmd_name, ((RF62X_msg_t*)rqst_msg)->_uid, data_size);
+
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
+
+    // Get params
+    mpack_tree_t tree;
+    mpack_tree_init_data(&tree, (const char*)data, data_size);
+    mpack_tree_parse(&tree);
+    if (mpack_tree_error(&tree) != mpack_ok)
+    {
+        status = FALSE;
+        mpack_tree_destroy(&tree);
+        return status;
+    }
+
+    for (rfUint32 i = 0; i < vector_count(search_result); i++)
+    {
+        if(((scanner_base_t*)vector_get(search_result, i))->type == kRF627_SMART)
+        {
+            uint32_t serial = ((scanner_base_t*)vector_get(search_result, i))->rf627_smart->info_by_service_protocol.fact_general_serial;
+            if (serial == device_id)
+                existing = TRUE;
+        }
+    }
+
+    if (existing)
+    {
+        RF62X_msg_t* msg = rqst_msg;
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        mpack_node_t root = mpack_tree_root(&tree);
+        mpack_node_t result_data = mpack_node_map_cstr(root, "result");
+        uint32_t result_size = mpack_node_strlen(result_data) + 1;
+
+        if (msg->result == NULL)
+        {
+            msg->result = calloc(1, sizeof (answer));
+        }
+
+        ((answer*)msg->result)->result = mpack_node_cstr_alloc(result_data, result_size);
+
+        status = TRUE;
+    }
+
+
+    mpack_tree_destroy(&tree);
+    return TRUE;
+}
+rfInt8 rf627_smart_save_recovery_params_timeout_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, "- Get timeout to %s command, rqst-id: %" PRIu64 ".\n",
+           msg->cmd_name, msg->_uid);
+
+    return TRUE;
+}
+rfInt8 rf627_smart_save_recovery_params_free_result_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, "- Free result to %s command, rqst-id: %" PRIu64 ".\n",
+           msg->cmd_name, msg->_uid);
+
+    if (msg->result != NULL)
+    {
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        free(((answer*)msg->result)->result);
+        free(msg->result);
+        msg->result = NULL;
+    }
+
+    return TRUE;
+}
+rfBool rf627_smart_save_recovery_params_to_scanner(rf627_smart_t* scanner, rfUint32 timeout)
+{
+    char* cmd_name                      = "SAVE_RECOVERY_PARAMETERS";
+    char* data                          = NULL;
+    uint32_t data_size                  = 0;
+    char* data_type                     = "blob";
+    uint8_t is_check_crc                = FALSE;
+    uint8_t is_confirmation             = FALSE;
+    uint8_t is_one_answ                 = TRUE;
+    uint32_t waiting_time               = timeout;
+    RF62X_answ_callback answ_clb        = rf627_smart_save_recovery_params_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_save_recovery_params_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_save_recovery_params_free_result_callback;
+
+    RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, data, data_size, data_type,
+                                             is_check_crc, is_confirmation, is_one_answ,
+                                             waiting_time,
+                                             answ_clb, timeout_clb, free_clb);
+
+    // Send test msg
+    if (!RF62X_channel_send_msg(&scanner->channel, msg))
+    {
+        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+    }
+    else
+    {
+        TRACE(TRACE_LEVEL_DEBUG, "%s", "Requests were sent.\n");
+    }
+
+    void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+    if (result != NULL)
+    {
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        if (rf_strcmp(((answer*)result)->result, "RF_OK") == 0)
+        {
+            // Cleanup test msg
+            RF62X_cleanup_msg(msg);
+            free(msg); msg = NULL;
+            return TRUE;
+        }
+
+        // Cleanup test msg
+        RF62X_cleanup_msg(msg);
+        free(msg); msg = NULL;
+        return FALSE;
+    }else
+    {
+        TRACE(TRACE_LEVEL_WARNING, "%s", "No response to SAVE_PARAMETERS request!\n");
+    }
+
+    return FALSE;
+}
+
+rfInt8 rf627_smart_load_recovery_params_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+{
+    answ_count++;
+    TRACE(TRACE_LEVEL_DEBUG, "+ Get answer to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+           ((RF62X_msg_t*)rqst_msg)->cmd_name, ((RF62X_msg_t*)rqst_msg)->_uid, data_size);
+
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
+
+    // Get params
+    mpack_tree_t tree;
+    mpack_tree_init_data(&tree, (const char*)data, data_size);
+    mpack_tree_parse(&tree);
+    if (mpack_tree_error(&tree) != mpack_ok)
+    {
+        status = FALSE;
+        mpack_tree_destroy(&tree);
+        return status;
+    }
+
+    for (rfUint32 i = 0; i < vector_count(search_result); i++)
+    {
+        if(((scanner_base_t*)vector_get(search_result, i))->type == kRF627_SMART)
+        {
+            uint32_t serial = ((scanner_base_t*)vector_get(search_result, i))->rf627_smart->info_by_service_protocol.fact_general_serial;
+            if (serial == device_id)
+                existing = TRUE;
+        }
+    }
+
+    if (existing)
+    {
+        RF62X_msg_t* msg = rqst_msg;
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        mpack_node_t root = mpack_tree_root(&tree);
+        mpack_node_t result_data = mpack_node_map_cstr(root, "result");
+        uint32_t result_size = mpack_node_strlen(result_data) + 1;
+
+        if (msg->result == NULL)
+        {
+            msg->result = calloc(1, sizeof (answer));
+        }
+
+        ((answer*)msg->result)->result = mpack_node_cstr_alloc(result_data, result_size);
+
+        status = TRUE;
+    }
+
+
+    mpack_tree_destroy(&tree);
+    return TRUE;
+}
+rfInt8 rf627_smart_load_recovery_params_timeout_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, "- Get timeout to %s command, rqst-id: %" PRIu64 ".\n",
+           msg->cmd_name, msg->_uid);
+
+    return TRUE;
+}
+rfInt8 rf627_smart_load_recovery_params_free_result_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, "- Free result to %s command, rqst-id: %" PRIu64 ".\n",
+           msg->cmd_name, msg->_uid);
+
+    if (msg->result != NULL)
+    {
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        free(((answer*)msg->result)->result);
+        free(msg->result);
+        msg->result = NULL;
+    }
+
+    return TRUE;
+}
+rfBool rf627_smart_load_recovery_params_from_scanner(rf627_smart_t* scanner, rfUint32 timeout)
+{
+    char* cmd_name                      = "LOAD_RECOVERY_PARAMETERS";
+    char* data                          = NULL;
+    uint32_t data_size                  = 0;
+    char* data_type                     = "blob";
+    uint8_t is_check_crc                = FALSE;
+    uint8_t is_confirmation             = FALSE;
+    uint8_t is_one_answ                 = TRUE;
+    uint32_t waiting_time               = timeout;
+    RF62X_answ_callback answ_clb        = rf627_smart_load_recovery_params_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_load_recovery_params_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_load_recovery_params_free_result_callback;
+
+    RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, data, data_size, data_type,
+                                             is_check_crc, is_confirmation, is_one_answ,
+                                             waiting_time,
+                                             answ_clb, timeout_clb, free_clb);
+
+    // Send test msg
+    if (!RF62X_channel_send_msg(&scanner->channel, msg))
+    {
+        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+    }
+    else
+    {
+        TRACE(TRACE_LEVEL_DEBUG, "%s", "Requests were sent.\n");
+    }
+
+    void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+    if (result != NULL)
+    {
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        if (rf_strcmp(((answer*)result)->result, "RF_OK") == 0)
+        {
+            // Cleanup test msg
+            RF62X_cleanup_msg(msg);
+            free(msg); msg = NULL;
+            return TRUE;
+        }
+
+        // Cleanup test msg
+        RF62X_cleanup_msg(msg);
+        free(msg); msg = NULL;
+        return FALSE;
+    }else
+    {
+        TRACE(TRACE_LEVEL_WARNING, "%s", "No response to SAVE_PARAMETERS request!\n");
+    }
+
+    return FALSE;
+}
+
 rfInt8 rf627_smart_get_frame_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
 {
     answ_count++;
@@ -3690,7 +3977,7 @@ rfBool rf627_smart_set_authorization_key_by_service_protocol(rf627_smart_t* scan
             return TRUE;
         }else
         {
-            TRACE(TRACE_LEVEL_ERROR, "%s - %s", "Authorization key not setted\n",
+            TRACE(TRACE_LEVEL_ERROR, "%s - %s", "Authorization key not setted",
                   ((answer*)result)->result);
         }
 
