@@ -36,7 +36,7 @@ API_EXPORT void set_platform_adapter_settings(
 
 
 /**
- * @brief search - Search for RF62X devices over network
+ * @brief search_scanners - Search for RF62X devices over network
  *
  * @param[out] list Ptr to list of rf627 objects. If not null list will be
  *                  filled with found devices
@@ -47,10 +47,12 @@ API_EXPORT void set_platform_adapter_settings(
  * @return TRUE on success
  */
 API_EXPORT rfUint8 search_scanners(
-        vector_t *list, scanner_types_t type, uint32_t timeout, protocol_types_t protocol);
+        vector_t *list, scanner_types_t type,
+        uint32_t timeout, protocol_types_t protocol);
 
 /**
- * @brief get_info_about_scanner - Get information about scanner from hello packet
+ * @brief get_info_about_scanner - Get information about scanner from
+ * hello packet
  *
  * @param[in] device Ptr to scanner
  * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
@@ -104,33 +106,64 @@ API_EXPORT rfUint8 disconnect_from_scanner(
 API_EXPORT void free_scanner(scanner_base_t *device);
 
 /**
- * @brief get_profile - Get measurement from scanner's data stream
- * @param device - ptr to scanner
- * @param zero_points Enable zero points in return profile2D
- * @param realtime Enable getting profile in real time (buffering is disabled)
- * @param protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @brief get_profile2D_from_scanner - Get measurement from scanner's data
+ * stream
+ * @param[in] device - ptr to scanner
+ * @param[in] zero_points Enable zero points in return profile2D
+ * @param[in] realtime Enable getting profile in real time (buffering disabled)
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
  * @return ptr to rf627_profile_t structure
  */
 API_EXPORT rf627_profile2D_t* get_profile2D_from_scanner(
-        scanner_base_t *device, rfBool zero_points, rfBool realtime, protocol_types_t protocol);
+        scanner_base_t *device, rfBool zero_points,
+        rfBool realtime, protocol_types_t protocol);
 
+/**
+ * @brief send_profile2D_request_to_scanner - Command to start profiles
+ * measuring.
+ * @param[in] device Ptr to scanner
+ * @param[in] count The count of measurements
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
 API_EXPORT uint8_t send_profile2D_request_to_scanner(
         scanner_base_t *device, rfUint32 count, protocol_types_t protocol);
 
+/**
+ * @brief free_profile2D - Cleanup resources allocated for profile2D
+ * @param[in] profile Ptr to rf627_profile2D_t
+ */
 API_EXPORT void free_profile2D(rf627_profile2D_t* profile);
 
 
+/** TODO
+ * @brief get_profile3D_from_scanner -
+ * @param device
+ * @param step_size
+ * @param k
+ * @param count_type
+ * @param zero_points
+ * @param protocol
+ * @return
+ */
 API_EXPORT rf627_profile3D_t* get_profile3D_from_scanner(
         scanner_base_t *device, rfFloat step_size, rfFloat k,
         count_types_t count_type,
         rfBool zero_points,
         protocol_types_t protocol);
 
+/**
+ * @brief get_frame_from_scanner - Get RAW frame from scanner
+ * @param[in] device Ptr to scanner
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return ptr to rf627_frame_t structure
+ */
 API_EXPORT rf627_frame_t* get_frame_from_scanner(
         scanner_base_t *device, protocol_types_t protocol);
 
 /**
- * @brief read_params_from_scanner - Read parameters from device to rfInternal structure.
+ * @brief read_params_from_scanner - Read parameters from device to rfInternal
+ * structure.
  * This structure is accessible via get_params() function
  * @param device - ptr to scanner
  * @param protocol -  protocol's type (Service Protocol, ENIP, Modbus-TCP)
@@ -199,9 +232,142 @@ API_EXPORT void free_parameter(
  * @return 0 if success
  */
 API_EXPORT rfUint8 set_parameter_by_name(
-        scanner_base_t *device, const char* param_name, rfUint32 count, va_list value);
+        scanner_base_t *device, const char* param_name,
+        rfUint32 count, va_list value);
 
 /**
+ * @brief get_dumps_profiles_from_scanner - getting the content of the
+ * profile dump
+ * @param[in] device Ptr to scanner
+ * @param[in] index Start number of the requested profile from memory
+ * @param[in] count The count of requested profiles
+ * @param[in] timeout Time to receive dump
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @param[out] dump Ptr to array from ptr to rf627_profile2D_t structures
+ * @param[out] dump_size Size of returned Array from ptrs to rf627_profile2D_t
+ * @param[in] dump_unit_size Size of cell for storing profile in the dump
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 get_dumps_profiles_from_scanner(
+        scanner_base_t *device, uint32_t index, uint32_t count,
+        uint32_t timeout, protocol_types_t protocol,
+        rf627_profile2D_t** dump, uint32_t* dump_size, uint32_t dump_unit_size);
+
+/**
+ * @brief get_authorization_token_from_scanner - Get authorization token
+ * from scanner
+ * @param[in] device Ptr to scanner
+ * @param[out] token Returned authorization token.
+ * @param[out] token_size Size of returned authorization token
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 get_authorization_token_from_scanner(
+        scanner_base_t *device, char** token, uint32_t* token_size,
+        uint32_t timeout, protocol_types_t protocol);
+
+/**
+ * @brief set_authorization_key_to_scanner - Set authorization key to scanner
+ * @param[in] device Ptr to scanner
+ * @param[in] key Authorization key.
+ * @param[in] key_size Size of authorization key.
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 set_authorization_key_to_scanner(
+        scanner_base_t *device, char* key, uint32_t key_size,
+        uint32_t timeout, protocol_types_t protocol);
+
+/**
+ * @brief read_calibration_table_from_scanner - Read calibration table
+ * from scanner
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 read_calibration_table_from_scanner(
+        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+
+/**
+ * @brief convert_calibration_table_from_bytes - Convert Calibration Table
+ * from bytes
+ * @param[in] bytes Ptr to byte array
+ * @param[in] data_size Size of byte array
+ * @return Ptr to rf627_calib_table_t
+ */
+API_EXPORT rf627_calib_table_t* convert_calibration_table_from_bytes(
+        char* bytes, uint32_t data_size);
+
+/**
+ * @brief convert_calibration_table_to_bytes - Convert Calibration Table
+ * to bytes
+ * @param[in] table Ptr to rf627_calib_table_t
+ * @param[out] bytes Returned byte array
+ * @param[out] data_size Size of returned byte array
+ * @return TRUE on success
+ */
+API_EXPORT rfBool convert_calibration_table_to_bytes(
+        rf627_calib_table_t* table, char** bytes, uint32_t* data_size);
+
+/**
+ * @brief write_calibration_table_to_scanner - Write calibration table
+ * to scanner
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 write_calibration_table_to_scanner(
+        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+
+/**
+ * @brief get_calibration_table_from_scanner - Get calibration table from
+ * internal SDK memory
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return Ptr to rf627_calib_table_t
+ */
+API_EXPORT rf627_calib_table_t* get_calibration_table_from_scanner(
+        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+
+/**
+ * @brief set_calibration_table_to_scanner - Set calibration table to internal
+ * SDK memory
+ * @param[in] device Ptr to scanner
+ * @param[in] table Ptr to rf627_calib_table_t
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 set_calibration_table_to_scanner(
+        scanner_base_t *device, rf627_calib_table_t* table,
+        uint32_t timeout, protocol_types_t protocol);
+
+/**
+ * @brief save_calibration_table_to_scanner - Save calibration table
+ * to device's memory
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 save_calibration_table_to_scanner(
+        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+
+/**
+ * @brief send_reboot_device_request_to_scanner - The scanner will restart
+ * @param[in] device Ptr to scanner
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT uint8_t send_reboot_device_request_to_scanner(
+        scanner_base_t *device, protocol_types_t protocol);
+
+/** TODO
  * @brief set_parameter - Search parameters by his name
  * @param device - ptr to scanner
  * @param param_name - name of parameter
@@ -210,7 +376,7 @@ API_EXPORT rfUint8 set_parameter_by_name(
 API_EXPORT rfUint8 send_command(
         scanner_base_t *device, command_t* command);
 
-/**
+/** TODO
  * @brief set_parameter - Search parameters by his name
  * @param device - ptr to scanner
  * @param param_name - name of parameter
@@ -218,39 +384,5 @@ API_EXPORT rfUint8 send_command(
  */
 API_EXPORT rfUint8 send_command2(
         scanner_base_t *device, command2_t* command);
-
-API_EXPORT rfUint8 get_dumps_profiles_from_scanner(
-        scanner_base_t *device, uint32_t index, uint32_t count,
-        uint32_t timeout, protocol_types_t protocol,
-        rf627_profile2D_t** dump, uint32_t* dump_size, uint32_t dump_unit_size);
-
-API_EXPORT rfUint8 get_authorization_token_from_scanner(
-        scanner_base_t *device, char** token, uint32_t* token_size, uint32_t timeout, protocol_types_t protocol);
-
-API_EXPORT rfUint8 set_authorization_key_to_scanner(
-        scanner_base_t *device, char* key, uint32_t key_size, uint32_t timeout, protocol_types_t protocol);
-
-API_EXPORT rfUint8 read_calibration_table_from_scanner(
-        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
-API_EXPORT rf627_calib_table_t* convert_calibration_table_from_bytes(char* bytes, uint32_t data_size);
-API_EXPORT rfBool convert_calibration_table_to_bytes(rf627_calib_table_t* table, char** bytes, uint32_t* data_size);
-API_EXPORT rfUint8 write_calibration_table_to_scanner(
-        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
-
-API_EXPORT rf627_calib_table_t* get_calibration_table_from_scanner(
-        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
-API_EXPORT rfUint8 set_calibration_table_to_scanner(
-        scanner_base_t *device, rf627_calib_table_t* table, uint32_t timeout, protocol_types_t protocol);
-
-API_EXPORT rfUint8 save_calibration_table_to_scanner(
-        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
-
-API_EXPORT uint8_t send_reboot_device_request_to_scanner(
-        scanner_base_t *device, protocol_types_t protocol);
-
-
-/*! Return structure containing device information about scanner rf627(smart) version
- */
-//dllexport device_info_t rf627_smart_get_info(rf627_smart_t* device);
 
 #endif // RF62X_SDK_H
