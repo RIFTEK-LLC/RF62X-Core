@@ -717,7 +717,7 @@ rfUint8 rf627_smart_set_parameter(rf627_smart_t* scanner, parameter_t* param)
         parameter_t* p = vector_get(scanner->params_list, i);
         if (rf_strcmp(p->base.name, param->base.name) == 0)
         {
-            if (rf_strcmp(p->base.type, parameter_value_types[PVT_STRING]) == 0)
+            if (rf_strcmp(p->base.type, "string_t") == 0)
             {
                 memory_platform.rf_free(p->val_str->value);
                 p->val_str->value = memory_platform.rf_calloc(param->base.size, sizeof (rfChar));
@@ -729,42 +729,42 @@ rfUint8 rf627_smart_set_parameter(rf627_smart_t* scanner, parameter_t* param)
                 p->is_changed = TRUE;
                 return TRUE;
             }
-            else if (rf_strcmp(p->base.type, parameter_value_types[PVT_INT]) == 0)
+            else if (rf_strcmp(p->base.type, "int32_t") == 0)
             {
                 p->val_int32->value = param->val_int32->value;
                 p->is_changed = TRUE;
                 return TRUE;
             }
-            else if (rf_strcmp(p->base.type, parameter_value_types[PVT_INT64]) == 0)
+            else if (rf_strcmp(p->base.type, "int64_t") == 0)
             {
                 p->val_int64->value = param->val_int64->value;
                 p->is_changed = TRUE;
                 return TRUE;
             }
-            else if (rf_strcmp(p->base.type, parameter_value_types[PVT_UINT]) == 0)
+            else if (rf_strcmp(p->base.type, "uint32_t") == 0)
             {
                 p->val_uint32->value = param->val_uint32->value;
                 p->is_changed = TRUE;
                 return TRUE;
             }
-            else if (rf_strcmp(p->base.type, parameter_value_types[PVT_UINT64]) == 0)
+            else if (rf_strcmp(p->base.type, "uint64_t") == 0)
             {
                 p->val_uint64->value = param->val_uint64->value;
                 p->is_changed = TRUE;
                 return TRUE;
             }
-            else if (rf_strcmp(p->base.type, parameter_value_types[PVT_FLOAT]) == 0)
+            else if (rf_strcmp(p->base.type, "float_t") == 0)
             {
                 p->val_flt->value = param->val_flt->value;
                 p->is_changed = TRUE;
                 return TRUE;
             }
-            else if (rf_strcmp(p->base.type, parameter_value_types[PVT_DOUBLE]) == 0)
+            else if (rf_strcmp(p->base.type, "double_t") == 0)
             {
                 p->val_dbl->value = param->val_dbl->value;
                 p->is_changed = TRUE;
                 return TRUE;
-            }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_UINT32]) == 0)
+            }else if (rf_strcmp(p->base.type, "u32_arr_t") == 0)
             {
                 memory_platform.rf_free(p->arr_uint32->value);
                 p->arr_uint32->value = memory_platform.rf_calloc(param->base.size, sizeof (uint8_t));
@@ -1123,7 +1123,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
             }
 
 
-            if(rf_strcmp(parameter_value_types[PVT_UINT], p->base.type) == 0)
+            if(rf_strcmp("uint32_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1212,7 +1212,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                                                     factory, i), "valuesEnum"), ii), "label"), label_strlen);
                     }
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_UINT64], p->base.type) == 0)
+            }else if(rf_strcmp("uint64_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1247,7 +1247,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_uint64->step = mpack_node_u64(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_INT], p->base.type) == 0)
+            }else if(rf_strcmp("int32_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1282,7 +1282,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_int32->step = mpack_node_i32(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_INT64], p->base.type) == 0)
+            }else if(rf_strcmp("int64_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1317,7 +1317,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_int64->step = mpack_node_i64(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_FLOAT], p->base.type) == 0)
+            }else if(rf_strcmp("float_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1352,7 +1352,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_flt->step = mpack_node_float(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_DOUBLE], p->base.type) == 0)
+            }else if(rf_strcmp("double_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1389,7 +1389,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_dbl->step = mpack_node_double(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_UINT32], p->base.type) == 0)
+            }else if(rf_strcmp("u32_arr_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1447,7 +1447,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_uint32->step = mpack_node_u32(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_UINT64], p->base.type) == 0)
+            }else if(rf_strcmp("u64_arr_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1505,7 +1505,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_uint64->step = mpack_node_u64(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_INT32], p->base.type) == 0)
+            }else if(rf_strcmp("i32_arr_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1563,7 +1563,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_int32->step = mpack_node_u32(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_INT64], p->base.type) == 0)
+            }else if(rf_strcmp("i64_arr_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1621,7 +1621,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_int64->step = mpack_node_i64(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_FLT], p->base.type) == 0)
+            }else if(rf_strcmp("flt_array_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1679,7 +1679,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_flt->step = mpack_node_float(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_DBL], p->base.type) == 0)
+            }else if(rf_strcmp("dbl_array_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1737,7 +1737,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_dbl->step = mpack_node_double(mpack_node_map_cstr(mpack_node_array_at(factory, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_STRING], p->base.type) == 0)
+            }else if(rf_strcmp("string_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "defaultValue"))
@@ -1828,7 +1828,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 p->base.access = mpack_node_cstr_alloc(mpack_node_map_cstr(mpack_node_array_at(user, i), "access"), param_strlen);
             }
 
-            if(rf_strcmp(parameter_value_types[PVT_UINT], p->base.type) == 0)
+            if(rf_strcmp("uint32_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -1919,7 +1919,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                     }
                 }
 
-            }else if(rf_strcmp(parameter_value_types[PVT_UINT64], p->base.type) == 0)
+            }else if(rf_strcmp("uint64_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -1954,7 +1954,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_uint64->step = mpack_node_u64(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_INT], p->base.type) == 0)
+            }else if(rf_strcmp("int32_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -1989,7 +1989,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_int32->step = mpack_node_i32(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_INT64], p->base.type) == 0)
+            }else if(rf_strcmp("int64_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2024,7 +2024,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_int64->step = mpack_node_i64(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_FLOAT], p->base.type) == 0)
+            }else if(rf_strcmp("float_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2059,7 +2059,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_flt->step = mpack_node_float(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_DOUBLE], p->base.type) == 0)
+            }else if(rf_strcmp("double_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2096,7 +2096,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->val_dbl->step = mpack_node_double(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_UINT32], p->base.type) == 0)
+            }else if(rf_strcmp("u32_arr_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2154,7 +2154,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_uint32->step = mpack_node_u32(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_UINT64], p->base.type) == 0)
+            }else if(rf_strcmp("u64_arr_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2212,7 +2212,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_uint64->step = mpack_node_u64(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_INT32], p->base.type) == 0)
+            }else if(rf_strcmp("i32_arr_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2270,7 +2270,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_int32->step = mpack_node_u32(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_INT64], p->base.type) == 0)
+            }else if(rf_strcmp("i64_arr_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2328,7 +2328,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_int64->step = mpack_node_i64(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_FLT], p->base.type) == 0)
+            }else if(rf_strcmp("flt_array_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2386,7 +2386,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_flt->step = mpack_node_float(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_DBL], p->base.type) == 0)
+            }else if(rf_strcmp("dbl_array_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2444,7 +2444,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 {
                     p->arr_dbl->step = mpack_node_double(mpack_node_map_cstr(mpack_node_array_at(user, i), "step"));
                 }
-            }else if(rf_strcmp(parameter_value_types[PVT_STRING], p->base.type) == 0)
+            }else if(rf_strcmp("string_t", p->base.type) == 0)
             {
                 // defaultValue
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "defaultValue"))
@@ -2667,67 +2667,67 @@ rfBool rf627_smart_write_params_to_scanner(rf627_smart_t* scanner, rfUint32 time
                 {
                     // Идентификатор устройства, отправившего сообщения
                     mpack_write_cstr(&writer, p->base.name);
-                    if(rf_strcmp(parameter_value_types[PVT_UINT], p->base.type) == 0)
+                    if(rf_strcmp("uint32_t", p->base.type) == 0)
                     {
                         mpack_write_u32(&writer, p->val_uint32->value);
-                    }else if(rf_strcmp(parameter_value_types[PVT_UINT64], p->base.type) == 0)
+                    }else if(rf_strcmp("uint64_t", p->base.type) == 0)
                     {
                        mpack_write_u64(&writer, p->val_uint64->value);
-                    }else if(rf_strcmp(parameter_value_types[PVT_INT], p->base.type) == 0)
+                    }else if(rf_strcmp("int32_t", p->base.type) == 0)
                     {
                        mpack_write_i32(&writer, p->val_int32->value);
-                    }else if(rf_strcmp(parameter_value_types[PVT_INT64], p->base.type) == 0)
+                    }else if(rf_strcmp("int64_t", p->base.type) == 0)
                     {
                         mpack_write_i64(&writer, p->val_int64->value);
-                    }else if(rf_strcmp(parameter_value_types[PVT_FLOAT], p->base.type) == 0)
+                    }else if(rf_strcmp("float_t", p->base.type) == 0)
                     {
                        mpack_write_float(&writer, p->val_flt->value);
-                    }else if(rf_strcmp(parameter_value_types[PVT_DOUBLE], p->base.type) == 0)
+                    }else if(rf_strcmp("double_t", p->base.type) == 0)
                     {
                         mpack_write_double(&writer, p->val_dbl->value);
-                    }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_UINT32], p->base.type) == 0)
+                    }else if(rf_strcmp("u32_arr_t", p->base.type) == 0)
                     {
                         mpack_start_array(&writer, p->arr_uint32->count);
                         {
                             for (rfSize ii = 0; ii < p->arr_uint32->count; ii++)
                                 mpack_write_u32(&writer, p->arr_uint32->value[ii]);
                         }mpack_finish_array(&writer);
-                    }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_UINT64], p->base.type) == 0)
+                    }else if(rf_strcmp("u64_arr_t", p->base.type) == 0)
                     {
                         mpack_start_array(&writer, p->arr_uint64->count);
                         {
                             for (rfSize ii = 0; ii < p->arr_uint64->count; ii++)
                                 mpack_write_u64(&writer, p->arr_uint64->value[ii]);
                         }mpack_finish_array(&writer);
-                    }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_INT32], p->base.type) == 0)
+                    }else if(rf_strcmp("i32_arr_t", p->base.type) == 0)
                     {
                         mpack_start_array(&writer, p->arr_int32->count);
                         {
                             for (rfSize ii = 0; ii < p->arr_int32->count; ii++)
                                 mpack_write_i32(&writer, p->arr_int32->value[ii]);
                         }mpack_finish_array(&writer);
-                    }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_INT64], p->base.type) == 0)
+                    }else if(rf_strcmp("i64_arr_t", p->base.type) == 0)
                     {
                         mpack_start_array(&writer, p->arr_int64->count);
                         {
                             for (rfSize ii = 0; ii < p->arr_int64->count; ii++)
                                 mpack_write_i64(&writer, p->arr_int64->value[ii]);
                         }mpack_finish_array(&writer);
-                    }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_FLT], p->base.type) == 0)
+                    }else if(rf_strcmp("flt_array_t", p->base.type) == 0)
                     {
                         mpack_start_array(&writer, p->arr_flt->count);
                         {
                             for (rfSize ii = 0; ii < p->arr_flt->count; ii++)
                                 mpack_write_float(&writer, p->arr_flt->value[ii]);
                         }mpack_finish_array(&writer);
-                    }else if(rf_strcmp(parameter_value_types[PVT_ARRAY_DBL], p->base.type) == 0)
+                    }else if(rf_strcmp("dbl_array_t", p->base.type) == 0)
                     {
                         mpack_start_array(&writer, p->arr_dbl->count);
                         {
                             for (rfSize ii = 0; ii < p->arr_dbl->count; ii++)
                                 mpack_write_double(&writer, p->arr_dbl->value[ii]);
                         }mpack_finish_array(&writer);
-                    }else if(rf_strcmp(parameter_value_types[PVT_STRING], p->base.type) == 0)
+                    }else if(rf_strcmp("string_t", p->base.type) == 0)
                     {
                         mpack_write_str(&writer, p->val_str->value, p->base.size);
                     }

@@ -408,7 +408,7 @@ rf627_profile3D_t* get_profile3D_from_scanner(
 
 void free_smart_parameter(parameter_t* p)
 {
-    if (rf_strcmp(p->base.type, parameter_value_types[PVT_UINT]) == 0)
+    if (rf_strcmp(p->base.type, "uint32_t") == 0)
     {
         if(p->val_uint32->enumValues != NULL)
         {
@@ -431,7 +431,7 @@ void free_smart_parameter(parameter_t* p)
         }
 
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_UINT64]) == 0)
+    }else if (rf_strcmp(p->base.type, "uint64_t") == 0)
     {
         memory_platform.rf_free(p->val_uint64); p->val_uint64 = NULL;
         memory_platform.rf_free(p->base.name); p->base.name = NULL;
@@ -441,7 +441,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_INT]) == 0)
+    }else if (rf_strcmp(p->base.type, "int32_t") == 0)
     {
         memory_platform.rf_free(p->val_int32); p->val_int32 = NULL;
         memory_platform.rf_free(p->base.name); p->base.name = NULL;
@@ -451,7 +451,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_INT64]) == 0)
+    }else if (rf_strcmp(p->base.type, "int64_t") == 0)
     {
         memory_platform.rf_free(p->val_int64); p->val_int64 = NULL;
         memory_platform.rf_free(p->base.name); p->base.name = NULL;
@@ -461,7 +461,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_FLOAT]) == 0)
+    }else if (rf_strcmp(p->base.type, "float_t") == 0)
     {
         memory_platform.rf_free(p->val_flt); p->val_flt = NULL;
         memory_platform.rf_free(p->base.name); p->base.name = NULL;
@@ -471,7 +471,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_DOUBLE]) == 0)
+    }else if (rf_strcmp(p->base.type, "double_t") == 0)
     {
         memory_platform.rf_free(p->val_dbl); p->val_dbl = NULL;
         memory_platform.rf_free(p->base.name); p->base.name = NULL;
@@ -481,7 +481,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_UINT32]) == 0)
+    }else if (rf_strcmp(p->base.type, "u32_arr_t") == 0)
     {
         memory_platform.rf_free(p->arr_uint32->value); p->arr_uint32->value = NULL;
         memory_platform.rf_free(p->arr_uint32->defValue); p->arr_uint32->defValue = NULL;
@@ -493,7 +493,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_UINT64]) == 0)
+    }else if (rf_strcmp(p->base.type, "u64_arr_t") == 0)
     {
         memory_platform.rf_free(p->arr_uint64->value); p->arr_uint64->value = NULL;
         memory_platform.rf_free(p->arr_uint64->defValue); p->arr_uint64->defValue = NULL;
@@ -505,7 +505,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_INT32]) == 0)
+    }else if (rf_strcmp(p->base.type, "i32_arr_t") == 0)
     {
         memory_platform.rf_free(p->arr_int32->value); p->arr_int32->value = NULL;
         memory_platform.rf_free(p->arr_int32->defValue); p->arr_int32->defValue = NULL;
@@ -517,7 +517,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_INT64]) == 0)
+    }else if (rf_strcmp(p->base.type, "i64_arr_t") == 0)
     {
         memory_platform.rf_free(p->arr_int64->value); p->arr_int64->value = NULL;
         memory_platform.rf_free(p->arr_int64->defValue); p->arr_int64->defValue = NULL;
@@ -529,7 +529,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_FLT]) == 0)
+    }else if (rf_strcmp(p->base.type, "flt_array_t") == 0)
     {
         memory_platform.rf_free(p->arr_flt->value); p->arr_flt->value = NULL;
         memory_platform.rf_free(p->arr_flt->defValue); p->arr_flt->defValue = NULL;
@@ -541,7 +541,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_DBL]) == 0)
+    }else if (rf_strcmp(p->base.type, "dbl_array_t") == 0)
     {
         memory_platform.rf_free(p->arr_dbl->value); p->arr_dbl->value = NULL;
         memory_platform.rf_free(p->arr_dbl->defValue); p->arr_dbl->defValue = NULL;
@@ -553,7 +553,7 @@ void free_smart_parameter(parameter_t* p)
             memory_platform.rf_free(p->base.units); p->base.units = NULL;
         }
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_STRING]) == 0)
+    }else if (rf_strcmp(p->base.type, "string_t") == 0)
     {
         memory_platform.rf_free(p->val_str->value); p->val_str->value = NULL;
         memory_platform.rf_free(p->val_str->defValue); p->val_str->defValue = NULL;
@@ -571,57 +571,57 @@ void free_smart_parameter(parameter_t* p)
 
 void free_old_parameter(parameter_t* p)
 {
-    if (rf_strcmp(p->base.type, parameter_value_types[PVT_UINT]) == 0)
+    if (rf_strcmp(p->base.type, "uint32_t") == 0)
     {
         memory_platform.rf_free(p->val_uint32);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_UINT64]) == 0)
+    }else if (rf_strcmp(p->base.type, "uint64_t") == 0)
     {
         memory_platform.rf_free(p->val_uint64);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_INT]) == 0)
+    }else if (rf_strcmp(p->base.type, "int32_t") == 0)
     {
         memory_platform.rf_free(p->val_int32);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_INT64]) == 0)
+    }else if (rf_strcmp(p->base.type, "int64_t") == 0)
     {
         memory_platform.rf_free(p->val_int64);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_FLOAT]) == 0)
+    }else if (rf_strcmp(p->base.type, "float_t") == 0)
     {
         memory_platform.rf_free(p->val_flt);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_DOUBLE]) == 0)
+    }else if (rf_strcmp(p->base.type, "double_t") == 0)
     {
         memory_platform.rf_free(p->val_dbl);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_UINT32]) == 0)
+    }else if (rf_strcmp(p->base.type, "u32_arr_t") == 0)
     {
         //memory_platform.rf_free(p->arr_uint32->value);
         //memory_platform.rf_free(p->arr_uint32->defValue);
         memory_platform.rf_free(p->arr_uint32);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_UINT64]) == 0)
+    }else if (rf_strcmp(p->base.type, "u64_arr_t") == 0)
     {
         memory_platform.rf_free(p->arr_uint64);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_INT32]) == 0)
+    }else if (rf_strcmp(p->base.type, "i32_arr_t") == 0)
     {
         memory_platform.rf_free(p->arr_int32);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_INT64]) == 0)
+    }else if (rf_strcmp(p->base.type, "i64_arr_t") == 0)
     {
         memory_platform.rf_free(p->arr_int64);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_FLT]) == 0)
+    }else if (rf_strcmp(p->base.type, "flt_array_t") == 0)
     {
         memory_platform.rf_free(p->arr_flt);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_ARRAY_DBL]) == 0)
+    }else if (rf_strcmp(p->base.type, "dbl_array_t") == 0)
     {
         memory_platform.rf_free(p->arr_dbl);
         //memory_platform.rf_free(p);
-    }else if (rf_strcmp(p->base.type, parameter_value_types[PVT_STRING]) == 0)
+    }else if (rf_strcmp(p->base.type, "string_t") == 0)
     {
         //memory_platform.rf_free(p->val_str->value);
         memory_platform.rf_free(p->val_str);
