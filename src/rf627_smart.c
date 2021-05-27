@@ -105,6 +105,12 @@ rf627_smart_t* rf627_smart_create_from_hello_msg(char* data, rfUint32 data_size)
                 mpack_node_uint(mpack_node_map_cstr(root, "fact_general_xsmr"));
     }
 
+    if (mpack_node_map_contains_cstr(root, "fact_general_xemr"))
+    {
+        rf627_smart->info_by_service_protocol.fact_general_xemr =
+                mpack_node_uint(mpack_node_map_cstr(root, "fact_general_xemr"));
+    }
+
     // The wavelength of the laser, installed in the device.
     if (mpack_node_map_contains_cstr(root, "fact_laser_waveLength"))
     {

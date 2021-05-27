@@ -613,6 +613,8 @@ typedef struct
     uint32_t user_streams_udpEnabled;
     uint32_t user_streams_format;
 
+    uint32_t fact_general_xemr;
+
 }rf627_smart_hello_info_by_service_protocol;
 
 //Типы значений параметров
