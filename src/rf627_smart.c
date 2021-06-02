@@ -29,6 +29,7 @@ char* generate_config_string(
 
 int answ_count = 0;
 vector_t *search_result = NULL;
+vector_t *temp_search_result = NULL;
 
 
 
@@ -802,6 +803,8 @@ rfInt8 rf627_smart_get_hello_callback(char* data, uint32_t data_size, uint32_t d
             if (serial == device_id)
             {
                 existing = TRUE;
+                vector_add(temp_search_result, vector_get(search_result,i));
+                status = TRUE;
             }
         }
     }
@@ -817,15 +820,19 @@ rfInt8 rf627_smart_get_hello_callback(char* data, uint32_t data_size, uint32_t d
         rf627->rf627_smart = rf627_smart_create_from_hello_msg(
                     data, data_size);
         vector_add(search_result, rf627);
+        vector_add(temp_search_result, vector_get(search_result,vector_count(search_result) -1));
 
+        status = TRUE;
+    }
+
+    if (status)
+    {
         RF62X_msg_t* msg = rqst_msg;
         if (msg->result == NULL)
         {
             msg->result = calloc(1, sizeof (uint32_t));
         }
-        *(uint32_t*)msg->result = (uint32_t)vector_count(search_result);
-
-        status = TRUE;
+        *(uint32_t*)msg->result = (uint32_t)vector_count(temp_search_result);
     }
 
     return status;
@@ -860,14 +867,21 @@ uint8_t rf627_smart_search_by_service_protocol(vector_t *scanner_list, rfUint32 
     // Если изменился указатель на старый результат поиска, значит поиск был
     // запущен повторно. Поэтому неоходимо очистить память, выделенную во
     // время предыдущего поиска.
-    if (search_result != scanner_list && search_result != NULL)
+    if (temp_search_result != scanner_list && temp_search_result != NULL)
     {
-        while (vector_count(search_result) > 0) {
-            vector_delete(search_result, vector_count(search_result)-1);
+        while (vector_count(temp_search_result) > 0) {
+            vector_delete(temp_search_result, vector_count(temp_search_result)-1);
         }
-        free (search_result); search_result = NULL;
+        free (temp_search_result); temp_search_result = NULL;
     }
-    search_result = scanner_list;
+
+    if (search_result == NULL)
+    {
+        search_result = (vector_t*)calloc(1, sizeof (vector_t));
+        //Initialization vector
+        vector_init(&search_result);
+    }
+    temp_search_result = scanner_list;
 
     uint32_t host_device_uid = 777;
     char* host_ip_addr = NULL;
@@ -977,7 +991,7 @@ rfInt8 rf627_smart_check_connection_callback(char* data, uint32_t data_size, uin
         {
             msg->result = calloc(1, sizeof (uint32_t));
         }
-        *(uint32_t*)msg->result = TRUE;
+        *(uint32_t*)msg->result = device_id;
 
         status = TRUE;
     }
@@ -1039,18 +1053,18 @@ rfBool rf627_smart_check_connection_by_service_protocol(rf627_smart_t* scanner, 
     }
 
 
-    uint32_t is_connected = 0;
+    uint32_t device_id = 0;
     void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
     if (result != NULL)
     {
-        is_connected = *(uint32_t*)result;
+        device_id = *(uint32_t*)result;
     }
 
     // Cleanup test msg
     RF62X_cleanup_msg(msg);
     free(msg); msg = NULL;
 
-    if (is_connected)
+    if (scanner->info_by_service_protocol.fact_general_serial == device_id)
         return TRUE;
     else return FALSE;
 }
