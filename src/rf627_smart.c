@@ -226,52 +226,67 @@ rf627_smart_t* rf627_smart_create_from_hello_msg(char* data, rfUint32 data_size)
 }
 void rf627_smart_free(rf627_smart_t* scanner)
 {
-    RF62X_channel_cleanup(&scanner->channel);
-    network_platform.network_methods.close_socket(scanner->m_data_sock);
+    for (rfUint32 i = 0; i < vector_count(search_result); i++)
+    {
+        if(((scanner_base_t*)vector_get(search_result, i))->type == kRF627_SMART)
+        {
+            uint32_t serial = ((scanner_base_t*)vector_get(search_result, i))->rf627_smart->info_by_service_protocol.fact_general_serial;
+            if (serial == scanner->info_by_service_protocol.fact_general_serial)
+            {
+                RF62X_channel_cleanup(&scanner->channel);
+                network_platform.network_methods.close_socket(scanner->m_data_sock);
 
-    while (vector_count(scanner->params_list) > 0)
-    {
-        parameter_t* p = vector_get(scanner->params_list, vector_count(scanner->params_list)-1);
-        free_parameter(p, kRF627_SMART);
+                while (vector_count(scanner->params_list) > 0)
+                {
+                    parameter_t* p = vector_get(scanner->params_list, vector_count(scanner->params_list)-1);
+                    free_parameter(p, kRF627_SMART);
 
-        vector_delete(scanner->params_list, vector_count(scanner->params_list)-1);
+                    vector_delete(scanner->params_list, vector_count(scanner->params_list)-1);
+                }
+
+                if (scanner->info_by_service_protocol.user_general_deviceName != NULL)
+                {
+                    free (scanner->info_by_service_protocol.user_general_deviceName);
+                    scanner->info_by_service_protocol.user_general_deviceName = NULL;
+                }
+                if (scanner->info_by_service_protocol.user_network_ip != NULL)
+                {
+                    free (scanner->info_by_service_protocol.user_network_ip);
+                    scanner->info_by_service_protocol.user_network_ip = NULL;
+                }
+                if (scanner->info_by_service_protocol.user_network_mask != NULL)
+                {
+                    free (scanner->info_by_service_protocol.user_network_mask);
+                    scanner->info_by_service_protocol.user_network_mask = NULL;
+                }
+                if (scanner->info_by_service_protocol.user_network_gateway != NULL)
+                {
+                    free (scanner->info_by_service_protocol.user_network_gateway);
+                    scanner->info_by_service_protocol.user_network_gateway = NULL;
+                }
+                if (scanner->info_by_service_protocol.user_network_hostIP != NULL)
+                {
+                    free (scanner->info_by_service_protocol.user_network_hostIP);
+                    scanner->info_by_service_protocol.user_network_hostIP = NULL;
+                }
+                if (scanner->info_by_service_protocol.user_network_hostIP != NULL)
+                {
+                    free (scanner->info_by_service_protocol.user_network_hostIP);
+                    scanner->info_by_service_protocol.user_network_hostIP = NULL;
+                }
+                if (scanner != NULL)
+                {
+                    free (scanner);
+                    scanner = NULL;
+                }
+
+                vector_delete(search_result, i);
+            }
+        }
     }
 
-    if (scanner->info_by_service_protocol.user_general_deviceName != NULL)
-    {
-        free (scanner->info_by_service_protocol.user_general_deviceName);
-        scanner->info_by_service_protocol.user_general_deviceName = NULL;
-    }
-    if (scanner->info_by_service_protocol.user_network_ip != NULL)
-    {
-        free (scanner->info_by_service_protocol.user_network_ip);
-        scanner->info_by_service_protocol.user_network_ip = NULL;
-    }
-    if (scanner->info_by_service_protocol.user_network_mask != NULL)
-    {
-        free (scanner->info_by_service_protocol.user_network_mask);
-        scanner->info_by_service_protocol.user_network_mask = NULL;
-    }
-    if (scanner->info_by_service_protocol.user_network_gateway != NULL)
-    {
-        free (scanner->info_by_service_protocol.user_network_gateway);
-        scanner->info_by_service_protocol.user_network_gateway = NULL;
-    }
-    if (scanner->info_by_service_protocol.user_network_hostIP != NULL)
-    {
-        free (scanner->info_by_service_protocol.user_network_hostIP);
-        scanner->info_by_service_protocol.user_network_hostIP = NULL;
-    }
-    if (scanner->info_by_service_protocol.user_network_hostIP != NULL)
-    {
-        free (scanner->info_by_service_protocol.user_network_hostIP);
-        scanner->info_by_service_protocol.user_network_hostIP = NULL;
-    }
-    if (scanner != NULL)
-    {
-        free (scanner);
-        scanner = NULL;
-    }
+
+
 }
 rf627_smart_hello_info_by_service_protocol* rf627_smart_get_scanner_info_by_service_protocol(rf627_smart_t* scanner)
 {
