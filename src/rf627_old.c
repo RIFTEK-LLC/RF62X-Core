@@ -4,6 +4,7 @@
 #include "memory_platform.h"
 #include "netwok_platform.h"
 #include <stdarg.h>
+#include <time.h>
 
 //#include <pthread.h>
 
@@ -52,10 +53,10 @@ typedef enum{
 
 //Формат представления профиля
 typedef enum{
-    DF_PIXELS				= 0x10,
-    DF_PROFILE				= 0x11,
-    DF_PIXELS_INTRP			= 0x12,
-    DF_PROFILE_INTRP		= 0x13
+    DF_PIXELS				= 0x00,
+    DF_PROFILE				= 0x01,
+    DF_PIXELS_INTRP			= 0x02,
+    DF_PROFILE_INTRP		= 0x03
 }dataFormat_t;
 
 //Режим первичной обработки видео
@@ -220,8 +221,11 @@ int rf627_old_mutex_unlock()
 }
 
 
+#ifdef _WIN32
+extern void usleep(__int64 usec);
+#endif
 
-uint8_t rf627_old_search_by_service_protocol(vector_t *result, rfUint32 ip_addr)
+uint8_t rf627_old_search_by_service_protocol(vector_t *result, rfUint32 ip_addr, rfUint32 timeout)
 {
     void* s;
     rfUint32 dst_ip_addr, srs_ip_addr;
@@ -274,6 +278,7 @@ uint8_t rf627_old_search_by_service_protocol(vector_t *result, rfUint32 ip_addr)
         if (rf627_protocol_send_packet_by_udp(
                     s, TX, request_packet_size, dst_ip_addr, dst_port, 0, NULL))
         {
+            usleep(timeout*1000);
             rfUint32 response_packet_size =
                     rf627_protocol_old_get_size_of_response_hello_packet();
             do
@@ -1102,821 +1107,904 @@ rfBool set_value_by_key(parameter_t* p, char* key)
     return 1;
 }
 
+enum ParamEnumType
+{
+    kBoolEnum,
+    kFlipEnum,
+    kRoiPosModeEnum,
+    kNetSpeedEnum,
+    kStreamsFormatEnum,
+    kProcessingModeEnum,
+    kMedianFilterEnum,
+    kBilateralFilterEnum,
+    kPeakModeEnum,
+    kLaserModeEnum,
+    kInput1EventEnum,
+    kInput1ModeEnum,
+    kInput2ModeEnum,
+    kInput3ModeEnum,
+    kOutputModeEnum,
+    kMotionTypeEnum,
+    kYSourceEnum,
+    kPaintModeEnum
+};
 
+valuesEnum_t* createParamEnum(enum ParamEnumType enum_type)
+{
+    switch (enum_type) {
+    case kBoolEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+
+        valuesEnum_t* boolEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        boolEnum->recCount = 2;
+        boolEnum->rec =  memory_platform.rf_calloc(boolEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "false";
+        label = "false";
+        boolEnum->rec[enum_index].value = 0;
+        boolEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(boolEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        boolEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(boolEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "true";
+        label = "true";
+        boolEnum->rec[enum_index].value = 0;
+        boolEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(boolEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        boolEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(boolEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return boolEnum;
+    }
+    case kFlipEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+
+        valuesEnum_t* flipEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        flipEnum->recCount = 4;
+        flipEnum->rec =  memory_platform.rf_calloc(flipEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "No";
+        label = "No";
+        flipEnum->rec[enum_index].value = FM_NO;
+        flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "X";
+        label = "X";
+        flipEnum->rec[enum_index].value = FM_X;
+        flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Z";
+        label = "Z";
+        flipEnum->rec[enum_index].value = FM_Z;
+        flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "XZ";
+        label = "XZ";
+        flipEnum->rec[enum_index].value = FM_XZ;
+        flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return flipEnum;
+    }
+    case kRoiPosModeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* roiPosModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        roiPosModeEnum->recCount = 2;
+        roiPosModeEnum->rec =  memory_platform.rf_calloc(roiPosModeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "manual";
+        label = "manual";
+        roiPosModeEnum->rec[enum_index].value = RPM_MANUAL;
+        roiPosModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        roiPosModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "auto";
+        label = "auto";
+        roiPosModeEnum->rec[enum_index].value = RPM_AUTO;
+        roiPosModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        roiPosModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return roiPosModeEnum;
+    }
+    case kNetSpeedEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* netSpeedEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        netSpeedEnum->recCount = 3;
+        netSpeedEnum->rec =  memory_platform.rf_calloc(netSpeedEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "10";
+        label = "10";
+        netSpeedEnum->rec[enum_index].value = LS_10MBIT;
+        netSpeedEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        netSpeedEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "100";
+        label = "100";
+        netSpeedEnum->rec[enum_index].value = LS_100MBIT;
+        netSpeedEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        netSpeedEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "1000";
+        label = "1000";
+        netSpeedEnum->rec[enum_index].value = LS_1GBIT;
+        netSpeedEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        netSpeedEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return netSpeedEnum;
+    }
+    case kStreamsFormatEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* streamsFormatEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        streamsFormatEnum->recCount = 4;
+        streamsFormatEnum->rec =  memory_platform.rf_calloc(streamsFormatEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "PIXELS";
+        label = "Pixels";
+        streamsFormatEnum->rec[enum_index].value = DF_PIXELS;
+        streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "PROFILE";
+        label = "Profile";
+        streamsFormatEnum->rec[enum_index].value = DF_PROFILE;
+        streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "PIXELS_INTRP";
+        label = "Interpolated pixels";
+        streamsFormatEnum->rec[enum_index].value = DF_PIXELS_INTRP;
+        streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "PROFILE_INTRP";
+        label = "Interpolated profile";
+        streamsFormatEnum->rec[enum_index].value = DF_PROFILE_INTRP;
+        streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return streamsFormatEnum;
+    }
+    case kProcessingModeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* processingModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        processingModeEnum->recCount = 2;
+        processingModeEnum->rec =  memory_platform.rf_calloc(processingModeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "High accuracy";
+        label = "High accuracy";
+        processingModeEnum->rec[enum_index].value = PM_ACCURACY;
+        processingModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        processingModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Welding";
+        label = "Welding";
+        processingModeEnum->rec[enum_index].value = PM_WELDING;
+        processingModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        processingModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+        return processingModeEnum;
+    }
+    case kMedianFilterEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* medianFilterEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        medianFilterEnum->recCount = 8;
+        medianFilterEnum->rec =  memory_platform.rf_calloc(medianFilterEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "0";
+        label = "0";
+        medianFilterEnum->rec[enum_index].value = 0;
+        medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "3";
+        label = "3";
+        medianFilterEnum->rec[enum_index].value = 3;
+        medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "5";
+        label = "5";
+        medianFilterEnum->rec[enum_index].value = 5;
+        medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "7";
+        label = "7";
+        medianFilterEnum->rec[enum_index].value = 7;
+        medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "9";
+        label = "9";
+        medianFilterEnum->rec[enum_index].value = 9;
+        medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "11";
+        label = "11";
+        medianFilterEnum->rec[enum_index].value = 11;
+        medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "13";
+        label = "13";
+        medianFilterEnum->rec[enum_index].value = 13;
+        medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "15";
+        label = "15";
+        medianFilterEnum->rec[enum_index].value = 15;
+        medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return medianFilterEnum;
+    }
+    case kBilateralFilterEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* bilateralFilterEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        bilateralFilterEnum->recCount = 8;
+        bilateralFilterEnum->rec =  memory_platform.rf_calloc(bilateralFilterEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "0";
+        label = "0";
+        bilateralFilterEnum->rec[enum_index].value = 0;
+        bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "3";
+        label = "3";
+        bilateralFilterEnum->rec[enum_index].value = 3;
+        bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "5";
+        label = "5";
+        bilateralFilterEnum->rec[enum_index].value = 5;
+        bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "7";
+        label = "7";
+        bilateralFilterEnum->rec[enum_index].value = 7;
+        bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "9";
+        label = "9";
+        bilateralFilterEnum->rec[enum_index].value = 9;
+        bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "11";
+        label = "11";
+        bilateralFilterEnum->rec[enum_index].value = 11;
+        bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "13";
+        label = "13";
+        bilateralFilterEnum->rec[enum_index].value = 13;
+        bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "15";
+        label = "15";
+        bilateralFilterEnum->rec[enum_index].value = 15;
+        bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return bilateralFilterEnum;
+    }
+    case kPeakModeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* peakModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        peakModeEnum->recCount = 8;
+        peakModeEnum->rec =  memory_platform.rf_calloc(peakModeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "Max intensity";
+        label = "Max intensity";
+        peakModeEnum->rec[enum_index].value = PM_MAX_INTENSITY;
+        peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "First";
+        label = "First";
+        peakModeEnum->rec[enum_index].value = PM_FIRST;
+        peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Last";
+        label = "Last";
+        peakModeEnum->rec[enum_index].value = PM_LAST;
+        peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "#2";
+        label = "#2";
+        peakModeEnum->rec[enum_index].value = PM_NUMBER_2;
+        peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "#3";
+        label = "#3";
+        peakModeEnum->rec[enum_index].value = PM_NUMBER_3;
+        peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "#4";
+        label = "#4";
+        peakModeEnum->rec[enum_index].value = PM_NUMBER_4;
+        peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "#5";
+        label = "#5";
+        peakModeEnum->rec[enum_index].value = PM_NUMBER_5;
+        peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "#6";
+        label = "#6";
+        peakModeEnum->rec[enum_index].value = PM_NUMBER_6;
+        peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+        return peakModeEnum;
+    }
+    case kLaserModeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* laserModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        laserModeEnum->recCount = 2;
+        laserModeEnum->rec =  memory_platform.rf_calloc(laserModeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "Always on";
+        label = "Always on";
+        laserModeEnum->rec[enum_index].value = LASER_ALWAYS_ZERO;
+        laserModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        laserModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Expose sync";
+        label = "Expose sync";
+        laserModeEnum->rec[enum_index].value = LASER_STROBE_INV;
+        laserModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        laserModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return laserModeEnum;
+    }
+    case kInput1EventEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* input1EventEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        input1EventEnum->recCount = 3;
+        input1EventEnum->rec =  memory_platform.rf_calloc(input1EventEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "Internal generator";
+        label = "Internal generator";
+        input1EventEnum->rec[enum_index].value = IN1_EVENT_IGEN;
+        input1EventEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input1EventEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "External sync";
+        label = "External sync";
+        input1EventEnum->rec[enum_index].value = IN1_EVENT_EXT;
+        input1EventEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input1EventEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Software request";
+        label = "Software request";
+        input1EventEnum->rec[enum_index].value = IN1_EVENT_SREQ;
+        input1EventEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input1EventEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return input1EventEnum;
+    }
+    case kInput1ModeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* input1ModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        input1ModeEnum->recCount = 4;
+        input1ModeEnum->rec =  memory_platform.rf_calloc(input1ModeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "Rise";
+        label = "Rise";
+        input1ModeEnum->rec[enum_index].value = IN1_MODE_RISE;
+        input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Fall";
+        label = "Fall";
+        input1ModeEnum->rec[enum_index].value = IN1_MODE_FALL;
+        input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "High level";
+        label = "High level";
+        input1ModeEnum->rec[enum_index].value = IN1_MODE_LVL1;
+        input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Low level";
+        label = "Low level";
+        input1ModeEnum->rec[enum_index].value = IN1_MODE_LVL0;
+        input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+        return input1ModeEnum;
+    }
+    case kInput2ModeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* input2ModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        input2ModeEnum->recCount = 2;
+        input2ModeEnum->rec =  memory_platform.rf_calloc(input2ModeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "Level";
+        label = "Level";
+        input2ModeEnum->rec[enum_index].value = IN2_MODE_LVL;
+        input2ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input2ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Phase";
+        label = "Phase";
+        input2ModeEnum->rec[enum_index].value = IN2_MODE_PHASE;
+        input2ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input2ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return input2ModeEnum;
+    }
+    case kInput3ModeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* input3ModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        input3ModeEnum->recCount = 2;
+        input3ModeEnum->rec =  memory_platform.rf_calloc(input3ModeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "Rise";
+        label = "Rise";
+        input3ModeEnum->rec[enum_index].value = IN3_MODE_RISE;
+        input3ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input3ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Fall";
+        label = "Fall";
+        input3ModeEnum->rec[enum_index].value = IN3_MODE_FALL;
+        input3ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        input3ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+        return input3ModeEnum;
+    }
+    case kOutputModeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* outputModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        outputModeEnum->recCount = 11;
+        outputModeEnum->rec =  memory_platform.rf_calloc(outputModeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "Exposure start";
+        label = "Exposure start";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_EXP_START;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "In1 level";
+        label = "In1 level";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_IN1_LOG_LVL;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "In1 rise";
+        label = "In1 rise";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_IN1_RISE;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "In1 fall";
+        label = "In1 fall";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_IN1_FALL;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "In2 level";
+        label = "In2 level";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_IN2_LOG_LVL;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "In2 rise";
+        label = "In2 rise";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_IN2_RISE;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "In2 fall";
+        label = "In2 fall";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_IN2_FALL;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "In3 level";
+        label = "In3 level";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_IN3_LOG_LVL;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "In3 rise";
+        label = "In3 rise";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_IN3_RISE;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "In3 fall";
+        label = "In3 fall";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_IN3_FALL;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Exposure time";
+        label = "Exposure time";
+        outputModeEnum->rec[enum_index].value = OUT_MODE_EXP_TIME;
+        outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+        return outputModeEnum;
+    }
+    case kMotionTypeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* motionTypeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        motionTypeEnum->recCount = 2;
+        motionTypeEnum->rec =  memory_platform.rf_calloc(motionTypeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "Linear";
+        label = "Linear";
+        motionTypeEnum->rec[enum_index].value = 0;
+        motionTypeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        motionTypeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Radial";
+        label = "Radial";
+        motionTypeEnum->rec[enum_index].value = 1;
+        motionTypeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        motionTypeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+        return motionTypeEnum;
+    }
+    case kYSourceEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* ySourceEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        ySourceEnum->recCount = 3;
+        ySourceEnum->rec =  memory_platform.rf_calloc(ySourceEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "System time";
+        label = "System time";
+        ySourceEnum->rec[enum_index].value = YA_SYSTEM_TIME;
+        ySourceEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        ySourceEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Step counter";
+        label = "Step counter";
+        ySourceEnum->rec[enum_index].value = YA_STEP_COUNTER;
+        ySourceEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        ySourceEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Measures counter";
+        label = "Measures counter";
+        ySourceEnum->rec[enum_index].value = YA_MEASURES_COUNTER;
+        ySourceEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        ySourceEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        return ySourceEnum;
+    }
+    case kPaintModeEnum:
+    {
+        char* key;
+        char* label;
+        int enum_index;
+        valuesEnum_t* paintModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
+        paintModeEnum->recCount = 2;
+        paintModeEnum->rec =  memory_platform.rf_calloc(paintModeEnum->recCount, sizeof(enumRec_t));
+        enum_index = 0;
+
+        key = "Heightmap";
+        label = "Heightmap";
+        paintModeEnum->rec[enum_index].value = 0;
+        paintModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        paintModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+
+        key = "Intensity";
+        label = "Intensity";
+        paintModeEnum->rec[enum_index].value = 1;
+        paintModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
+        memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
+        paintModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
+        memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
+        enum_index++;
+        return paintModeEnum;
+    }
+    default:
+        break;
+    }
+}
+
+void set_str(rfChar** dst_str, rfChar* src_str)
+{
+    rfUint32 src_str_size = rf_strlen(src_str) + 1;
+    *dst_str = memory_platform.rf_calloc(1, sizeof(rfChar) * src_str_size);
+    memory_platform.rf_memcpy(*dst_str, src_str, src_str_size);
+}
 
 rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 {
-
-    char* key;
-    char* label;
-    int enum_index;
-
-    valuesEnum_t* boolEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    boolEnum->recCount = 2;
-    boolEnum->rec =  memory_platform.rf_calloc(boolEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "false";
-    label = "false";
-    boolEnum->rec[enum_index].value = 0;
-    boolEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(boolEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    boolEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(boolEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "true";
-    label = "true";
-    boolEnum->rec[enum_index].value = 0;
-    boolEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(boolEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    boolEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(boolEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* flipEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    flipEnum->recCount = 4;
-    flipEnum->rec =  memory_platform.rf_calloc(flipEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "No";
-    label = "No";
-    flipEnum->rec[enum_index].value = FM_NO;
-    flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "X";
-    label = "X";
-    flipEnum->rec[enum_index].value = FM_X;
-    flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Z";
-    label = "Z";
-    flipEnum->rec[enum_index].value = FM_Z;
-    flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "XZ";
-    label = "XZ";
-    flipEnum->rec[enum_index].value = FM_XZ;
-    flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* roiPosModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    roiPosModeEnum->recCount = 2;
-    roiPosModeEnum->rec =  memory_platform.rf_calloc(roiPosModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "manual";
-    label = "manual";
-    roiPosModeEnum->rec[enum_index].value = RPM_MANUAL;
-    roiPosModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    roiPosModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "auto";
-    label = "auto";
-    roiPosModeEnum->rec[enum_index].value = RPM_AUTO;
-    roiPosModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    roiPosModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* netSpeedEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    netSpeedEnum->recCount = 3;
-    netSpeedEnum->rec =  memory_platform.rf_calloc(netSpeedEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "10";
-    label = "10";
-    netSpeedEnum->rec[enum_index].value = LS_10MBIT;
-    netSpeedEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    netSpeedEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "100";
-    label = "100";
-    netSpeedEnum->rec[enum_index].value = LS_100MBIT;
-    netSpeedEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    netSpeedEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "1000";
-    label = "1000";
-    netSpeedEnum->rec[enum_index].value = LS_1GBIT;
-    netSpeedEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    netSpeedEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* streamsFormatEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    streamsFormatEnum->recCount = 4;
-    streamsFormatEnum->rec =  memory_platform.rf_calloc(streamsFormatEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Pixels";
-    label = "Pixels";
-    streamsFormatEnum->rec[enum_index].value = DF_PIXELS;
-    streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Profile";
-    label = "Profile";
-    streamsFormatEnum->rec[enum_index].value = DF_PROFILE;
-    streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Interpolated pixels";
-    label = "Interpolated pixels";
-    streamsFormatEnum->rec[enum_index].value = DF_PIXELS_INTRP;
-    streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Interpolated profile";
-    label = "Interpolated profile";
-    streamsFormatEnum->rec[enum_index].value = DF_PROFILE_INTRP;
-    streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* processingModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    processingModeEnum->recCount = 2;
-    processingModeEnum->rec =  memory_platform.rf_calloc(processingModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "High accuracy";
-    label = "High accuracy";
-    processingModeEnum->rec[enum_index].value = PM_ACCURACY;
-    processingModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    processingModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Welding";
-    label = "Welding";
-    processingModeEnum->rec[enum_index].value = PM_WELDING;
-    processingModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    processingModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* medianFilterEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    medianFilterEnum->recCount = 8;
-    medianFilterEnum->rec =  memory_platform.rf_calloc(medianFilterEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "0";
-    label = "0";
-    medianFilterEnum->rec[enum_index].value = 0;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "3";
-    label = "3";
-    medianFilterEnum->rec[enum_index].value = 3;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "5";
-    label = "5";
-    medianFilterEnum->rec[enum_index].value = 5;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "7";
-    label = "7";
-    medianFilterEnum->rec[enum_index].value = 7;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "9";
-    label = "9";
-    medianFilterEnum->rec[enum_index].value = 9;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "11";
-    label = "11";
-    medianFilterEnum->rec[enum_index].value = 11;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "13";
-    label = "13";
-    medianFilterEnum->rec[enum_index].value = 13;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "15";
-    label = "15";
-    medianFilterEnum->rec[enum_index].value = 15;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* bilateralFilterEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    bilateralFilterEnum->recCount = 8;
-    bilateralFilterEnum->rec =  memory_platform.rf_calloc(bilateralFilterEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "0";
-    label = "0";
-    bilateralFilterEnum->rec[enum_index].value = 0;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "3";
-    label = "3";
-    bilateralFilterEnum->rec[enum_index].value = 3;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "5";
-    label = "5";
-    bilateralFilterEnum->rec[enum_index].value = 5;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "7";
-    label = "7";
-    bilateralFilterEnum->rec[enum_index].value = 7;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "9";
-    label = "9";
-    bilateralFilterEnum->rec[enum_index].value = 9;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "11";
-    label = "11";
-    bilateralFilterEnum->rec[enum_index].value = 11;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "13";
-    label = "13";
-    bilateralFilterEnum->rec[enum_index].value = 13;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "15";
-    label = "15";
-    bilateralFilterEnum->rec[enum_index].value = 15;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* peakModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    peakModeEnum->recCount = 8;
-    peakModeEnum->rec =  memory_platform.rf_calloc(peakModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Max intensity";
-    label = "Max intensity";
-    peakModeEnum->rec[enum_index].value = PM_MAX_INTENSITY;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "First";
-    label = "First";
-    peakModeEnum->rec[enum_index].value = PM_FIRST;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Last";
-    label = "Last";
-    peakModeEnum->rec[enum_index].value = PM_LAST;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#2";
-    label = "#2";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_2;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#3";
-    label = "#3";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_3;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#4";
-    label = "#4";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_4;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#5";
-    label = "#5";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_5;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#6";
-    label = "#6";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_6;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* laserModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    laserModeEnum->recCount = 2;
-    laserModeEnum->rec =  memory_platform.rf_calloc(laserModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Always on";
-    label = "Always on";
-    laserModeEnum->rec[enum_index].value = LASER_ALWAYS_ZERO;
-    laserModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    laserModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Expose sync";
-    label = "Expose sync";
-    laserModeEnum->rec[enum_index].value = LASER_STROBE_INV;
-    laserModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    laserModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-
-    valuesEnum_t* input1EventEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    input1EventEnum->recCount = 3;
-    input1EventEnum->rec =  memory_platform.rf_calloc(input1EventEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Internal generator";
-    label = "Internal generator";
-    input1EventEnum->rec[enum_index].value = IN1_EVENT_IGEN;
-    input1EventEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1EventEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "External sync";
-    label = "External sync";
-    input1EventEnum->rec[enum_index].value = IN1_EVENT_EXT;
-    input1EventEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1EventEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Software request";
-    label = "Software request";
-    input1EventEnum->rec[enum_index].value = IN1_EVENT_SREQ;
-    input1EventEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1EventEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* input1ModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    input1ModeEnum->recCount = 4;
-    input1ModeEnum->rec =  memory_platform.rf_calloc(input1ModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Rise";
-    label = "Rise";
-    input1ModeEnum->rec[enum_index].value = IN1_MODE_RISE;
-    input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Fall";
-    label = "Fall";
-    input1ModeEnum->rec[enum_index].value = IN1_MODE_FALL;
-    input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "High level";
-    label = "High level";
-    input1ModeEnum->rec[enum_index].value = IN1_MODE_LVL1;
-    input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Low level";
-    label = "Low level";
-    input1ModeEnum->rec[enum_index].value = IN1_MODE_LVL0;
-    input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* input2ModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    input2ModeEnum->recCount = 2;
-    input2ModeEnum->rec =  memory_platform.rf_calloc(input2ModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Level";
-    label = "Level";
-    input2ModeEnum->rec[enum_index].value = IN2_MODE_LVL;
-    input2ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input2ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Phase";
-    label = "Phase";
-    input2ModeEnum->rec[enum_index].value = IN2_MODE_PHASE;
-    input2ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input2ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-
-
-
-    valuesEnum_t* input3ModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    input3ModeEnum->recCount = 2;
-    input3ModeEnum->rec =  memory_platform.rf_calloc(input3ModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Rise";
-    label = "Rise";
-    input3ModeEnum->rec[enum_index].value = IN3_MODE_RISE;
-    input3ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input3ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Fall";
-    label = "Fall";
-    input3ModeEnum->rec[enum_index].value = IN3_MODE_FALL;
-    input3ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input3ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* outputModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    outputModeEnum->recCount = 11;
-    outputModeEnum->rec =  memory_platform.rf_calloc(outputModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Exposure start";
-    label = "Exposure start";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_EXP_START;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In1 level";
-    label = "In1 level";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN1_LOG_LVL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In1 rise";
-    label = "In1 rise";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN1_RISE;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In1 fall";
-    label = "In1 fall";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN1_FALL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In2 level";
-    label = "In2 level";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN2_LOG_LVL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In2 rise";
-    label = "In2 rise";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN2_RISE;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In2 fall";
-    label = "In2 fall";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN2_FALL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In3 level";
-    label = "In3 level";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN3_LOG_LVL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In3 rise";
-    label = "In3 rise";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN3_RISE;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In3 fall";
-    label = "In3 fall";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN3_FALL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Exposure time";
-    label = "Exposure time";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_EXP_TIME;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-
-    valuesEnum_t* motionTypeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    motionTypeEnum->recCount = 2;
-    motionTypeEnum->rec =  memory_platform.rf_calloc(motionTypeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Linear";
-    label = "Linear";
-    motionTypeEnum->rec[enum_index].value = 0;
-    motionTypeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    motionTypeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Radial";
-    label = "Radial";
-    motionTypeEnum->rec[enum_index].value = 1;
-    motionTypeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    motionTypeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* ySourceEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    ySourceEnum->recCount = 3;
-    ySourceEnum->rec =  memory_platform.rf_calloc(ySourceEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "System time";
-    label = "System time";
-    ySourceEnum->rec[enum_index].value = YA_SYSTEM_TIME;
-    ySourceEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    ySourceEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Step counter";
-    label = "Step counter";
-    ySourceEnum->rec[enum_index].value = YA_STEP_COUNTER;
-    ySourceEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    ySourceEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Measures counter";
-    label = "Measures counter";
-    ySourceEnum->rec[enum_index].value = YA_MEASURES_COUNTER;
-    ySourceEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    ySourceEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* paintModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    paintModeEnum->recCount = 2;
-    paintModeEnum->rec =  memory_platform.rf_calloc(paintModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Heightmap";
-    label = "Heightmap";
-    paintModeEnum->rec[enum_index].value = 0;
-    paintModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    paintModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Intensity";
-    label = "Intensity";
-    paintModeEnum->rec[enum_index].value = 1;
-    paintModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    paintModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
 
     rfSize RX_SIZE = rf627_protocol_old_get_size_of_header() + RF627_MAX_PAYLOAD_SIZE;
     rfUint8* RX = memory_platform.rf_calloc(1, RX_SIZE);
@@ -1984,12 +2072,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
                 rfUint16 index = 0;
                 parameter_t* p = create_parameter_from_type("string_t");
-                p->base.name = "user_general_deviceName";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_general_deviceName");
+                set_str(&p->base.access, "write");
+                set_str(&p->base.units,"");
                 p->base.index = index++;
                 p->base.offset = 0;
                 p->base.size = rf_strlen(scanner->user_params.general.name) + 1;
-                p->base.units = "";
 
                 p->val_str->value = memory_platform.rf_calloc(1, sizeof(rfChar) * p->base.size);
                 memory_platform.rf_memcpy(
@@ -1997,24 +2085,24 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
                             scanner->user_params.general.name,
                             p->base.size);
                 p->val_str->maxLen = sizeof (scanner->user_params.general.name);
-                p->val_str->defValue = "SERVICE CONFIGURATION, contact with manufacturer";
+                set_str(&p->val_str->defValue, "SERVICE CONFIGURATION, contact with manufacturer");
                 vector_add(scanner->params_list, p);
 
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_general_logSaveEnabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_general_logSaveEnabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 64;
                 p->base.size = sizeof(scanner->user_params.general.save_log_to_spi);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.general.save_log_to_spi;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 0;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 rfInt* def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2024,12 +2112,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_fpgaTemp";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_fpgaTemp");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 192;
                 p->base.size = sizeof(scanner->user_params.sysmon.fpga_temp);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.fpga_temp;
                 p->val_flt->min = -100;
@@ -2041,12 +2129,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_sysMon_paramsChanged";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_paramsChanged");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 194;
                 p->base.size = sizeof(scanner->user_params.sysmon.params_changed);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_uint32->value = scanner->user_params.sysmon.params_changed;
                 p->val_uint32->min = 0;
@@ -2058,12 +2146,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens00";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens00");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 195;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens00_temp);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens00_temp;
                 p->val_flt->min = -100;
@@ -2075,12 +2163,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens00Max";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens00Max");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 197;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens00_max);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens00_max;
                 p->val_flt->min = -100;
@@ -2092,12 +2180,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens00Min";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens00Min");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 199;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens00_min);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens00_min;
                 p->val_flt->min = -100;
@@ -2109,12 +2197,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens01";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens01");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 201;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens01_temp);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens01_temp;
                 p->val_flt->min = -100;
@@ -2126,12 +2214,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens01Max";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens01Max");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 203;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens01_max);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens01_max;
                 p->val_flt->min = -100;
@@ -2143,12 +2231,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens01Min";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens01Min");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 205;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens01_min);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens01_min;
                 p->val_flt->min = -100;
@@ -2160,12 +2248,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens10";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens10");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 207;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens10_temp);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens10_temp;
                 p->val_flt->min = -100;
@@ -2177,12 +2265,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens10Max";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens10Max");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 209;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens10_max);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens10_max;
                 p->val_flt->min = -100;
@@ -2194,12 +2282,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens10Min";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens10Min");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 211;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens10_min);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens10_min;
                 p->val_flt->min = -100;
@@ -2211,12 +2299,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens11";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens11");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 213;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens11_temp);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens11_temp;
                 p->val_flt->min = -100;
@@ -2228,12 +2316,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens11Max";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens11Max");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 215;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens11_max);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens11_max;
                 p->val_flt->min = -100;
@@ -2245,12 +2333,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("float_t");
-                p->base.name = "user_sysMon_tempSens11Min";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sysMon_tempSens11Min");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 217;
                 p->base.size = sizeof(scanner->user_params.sysmon.sens11_min);
-                p->base.units = "°C";
+                set_str(&p->base.units, "°C");
 
                 p->val_flt->value = scanner->user_params.sysmon.sens11_min;
                 p->val_flt->min = -100;
@@ -2262,19 +2350,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_compatibility_rf625enabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_compatibility_rf625enabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 274;
                 p->base.size = sizeof(scanner->user_params.rf625compat.enable);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.rf625compat.enable;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2283,12 +2371,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_compatibility_rf625TcpPort";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_compatibility_rf625TcpPort");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 275;
                 p->base.size = sizeof(scanner->user_params.rf625compat.tcp_port);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.rf625compat.tcp_port;
                 p->val_uint32->min = 0;
@@ -2300,19 +2388,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_sensor_doubleSpeedEnabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_sensor_doubleSpeedEnabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 309;
                 p->base.size = sizeof(scanner->user_params.sensor.dhs);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.sensor.dhs;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2321,12 +2409,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_analogGain";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_analogGain");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 310;
                 p->base.size = sizeof(scanner->user_params.sensor.gain_analog);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.sensor.gain_analog;
                 p->val_uint32->min = 0;
@@ -2338,12 +2426,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_digitalGain";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_digitalGain");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 311;
                 p->base.size = sizeof(scanner->user_params.sensor.gain_digital);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.sensor.gain_digital;
                 p->val_uint32->min = 0;
@@ -2355,12 +2443,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_sensor_exposure1";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_sensor_exposure1");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 312;
                 p->base.size = sizeof(scanner->user_params.sensor.exposure);
-                p->base.units = "ns";
+                set_str(&p->base.units, "ns");
 
                 p->val_uint32->value = scanner->user_params.sensor.exposure;
                 p->val_uint32->min = 3000;
@@ -2372,12 +2460,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_sensor_maxExposure";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sensor_maxExposure");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 316;
                 p->base.size = sizeof(scanner->user_params.sensor.max_exposure);
-                p->base.units = "ns";
+                set_str(&p->base.units, "ns");
 
                 p->val_uint32->value = scanner->user_params.sensor.max_exposure;
                 p->val_uint32->min = 3000;
@@ -2389,12 +2477,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_sensor_framerate";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_sensor_framerate");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 320;
                 p->base.size = sizeof(scanner->user_params.sensor.frame_rate);
-                p->base.units = "Hz";
+                set_str(&p->base.units, "Hz");
 
                 p->val_uint32->value = scanner->user_params.sensor.frame_rate;
                 p->val_uint32->min = 0;
@@ -2406,12 +2494,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_sensor_maxFramerate";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sensor_maxFramerate");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 324;
                 p->base.size = sizeof(scanner->user_params.sensor.max_frame_rate);
-                p->base.units = "Hz";
+                set_str(&p->base.units, "Hz");
 
                 p->val_uint32->value = scanner->user_params.sensor.max_frame_rate;
                 p->val_uint32->min = 0;
@@ -2425,19 +2513,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_sensor_exposureControl";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_sensor_exposureControl");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 329;
                 p->base.size = sizeof(scanner->user_params.sensor.auto_exposure);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.sensor.auto_exposure;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2447,19 +2535,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_sensor_edrType";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_sensor_edrType");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 330;
                 p->base.size = sizeof(scanner->user_params.sensor.column_edr_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.sensor.column_edr_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2469,12 +2557,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_sensor_edrColumnDivider";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_sensor_edrColumnDivider");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 331;
                 p->base.size = sizeof(scanner->user_params.sensor.column_exposure_div);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.sensor.column_exposure_div;
                 p->val_uint32->min = 1;
@@ -2486,19 +2574,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
                 //roi
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_roi_enabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_roi_enabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 392;
                 p->base.size = sizeof(scanner->user_params.roi.enable);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.roi.enable;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2508,19 +2596,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_roi_active";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_roi_active");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 393;
                 p->base.size = sizeof(scanner->user_params.roi.active);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.roi.active;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2530,12 +2618,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_roi_size";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_roi_size");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 394;
                 p->base.size = sizeof(scanner->user_params.roi.size);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.roi.size;
                 p->val_uint32->min = 0;
@@ -2547,19 +2635,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_roi_posMode";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_roi_posMode");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 396;
                 p->base.size = sizeof(scanner->user_params.roi.position_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.roi.position_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2569,12 +2657,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_roi_pos";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_roi_pos");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 397;
                 p->base.size = sizeof(scanner->user_params.roi.manual_position);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.roi.manual_position;
                 p->val_uint32->min = 0;
@@ -2586,12 +2674,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
                 //auto_position
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_roi_reqProfSize";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_roi_reqProfSize");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 401;
                 p->base.size = sizeof(scanner->user_params.roi.required_profile_size);
-                p->base.units = "points";
+                set_str(&p->base.units, "points");
 
                 p->val_uint32->value = scanner->user_params.roi.required_profile_size;
                 p->val_uint32->min = 0;
@@ -2603,19 +2691,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
                 //network
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_network_speed";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_network_speed");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 483;
                 p->base.size = sizeof(scanner->user_params.network.speed);
-                p->base.units = "points";
+                set_str(&p->base.units, "points");
 
                 p->val_uint32->value = scanner->user_params.network.speed;
                 p->val_uint32->min = 10;
                 p->val_uint32->max = 1000;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 1000;
-                p->val_uint32->enumValues = netSpeedEnum;
+                p->val_uint32->enumValues = createParamEnum(kNetSpeedEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "1000");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2625,19 +2713,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_network_autoNeg";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_network_autoNeg");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 485;
                 p->base.size = sizeof(scanner->user_params.network.autonegotiation);
-                p->base.units = "points";
+                set_str(&p->base.units, "points");
 
                 p->val_uint32->value = scanner->user_params.network.autonegotiation;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 1;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "true");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2648,12 +2736,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("u32_arr_t");
-                p->base.name = "user_network_ip";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_network_ip");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 486;
                 p->base.size = sizeof(scanner->user_params.network.ip_address);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->arr_uint32->value = memory_platform.rf_calloc(1, sizeof(rfUint32) * 4);
                 for (rfUint32 i = 0; i < p->base.size; i++)
@@ -2673,12 +2761,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("u32_arr_t");
-                p->base.name = "user_network_mask";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_network_mask");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 490;
                 p->base.size = sizeof(scanner->user_params.network.net_mask);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->arr_uint32->value = memory_platform.rf_calloc(1, sizeof(rfUint32) * 4);
                 for (rfUint32 i = 0; i < p->base.size; i++)
@@ -2698,12 +2786,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("u32_arr_t");
-                p->base.name = "user_network_gateway";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_network_gateway");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 494;
                 p->base.size = sizeof(scanner->user_params.network.gateway_ip);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->arr_uint32->value = memory_platform.rf_calloc(1, sizeof(rfUint32) * 4);
                 for (rfUint32 i = 0; i < p->base.size; i++)
@@ -2723,12 +2811,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("u32_arr_t");
-                p->base.name = "user_network_hostIP";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_network_hostIP");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 498;
                 p->base.size = sizeof(scanner->user_params.network.host_ip);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->arr_uint32->value = memory_platform.rf_calloc(1, sizeof(rfUint32) * 4);
                 for (rfUint32 i = 0; i < p->base.size; i++)
@@ -2748,12 +2836,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_network_hostPort";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_network_hostPort");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 502;
                 p->base.size = sizeof(scanner->user_params.network.stream_port);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.network.stream_port;
                 p->val_uint32->min = 0;
@@ -2765,12 +2853,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_network_webPort";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_network_webPort");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 504;
                 p->base.size = sizeof(scanner->user_params.network.http_port);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.network.http_port;
                 p->val_uint32->min = 0;
@@ -2782,12 +2870,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_network_servicePort";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_network_servicePort");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 506;
                 p->base.size = sizeof(scanner->user_params.network.service_port);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.network.service_port;
                 p->val_uint32->min = 0;
@@ -2799,19 +2887,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
                 //stream
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_streams_udpEnabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_streams_udpEnabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 576;
                 p->base.size = sizeof(scanner->user_params.stream.enable);
-                p->base.units = "points";
+                set_str(&p->base.units, "points");
 
                 p->val_uint32->value = scanner->user_params.stream.enable;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 1;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2821,19 +2909,19 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_streams_format";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_streams_format");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 577;
                 p->base.size = sizeof(scanner->user_params.stream.format);
-                p->base.units = "points";
+                set_str(&p->base.units, "points");
 
                 p->val_uint32->value = scanner->user_params.stream.format;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
                 p->val_uint32->defValue = 1;
-                p->val_uint32->enumValues = streamsFormatEnum;
+                p->val_uint32->enumValues = createParamEnum(kStreamsFormatEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "Profile");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2843,18 +2931,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_streams_includeIntensity";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_streams_includeIntensity");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 579;
                 p->base.size = sizeof(scanner->user_params.stream.include_intensivity);
-                p->base.units = "points";
+                set_str(&p->base.units, "points");
 
                 p->val_uint32->value = scanner->user_params.stream.include_intensivity;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2865,12 +2953,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
                 //image_processing
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_processing_threshold";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_processing_threshold");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 611;
                 p->base.size = sizeof(scanner->user_params.image_processing.brightness_threshold);
-                p->base.units = "%";
+                set_str(&p->base.units, "%");
 
                 p->val_uint32->value = scanner->user_params.image_processing.brightness_threshold;
                 p->val_uint32->min = 0;
@@ -2882,12 +2970,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
                 //filter_width
 
 //                p = create_parameter_from_type("uint32_t");
-//                p->base.name = parameter_names[USER_PROCESSING_MODE];
-//                p->base.access = "write";
+//                set_str(&p->base.name, parameter_names[USER_PROCESSING_MODE];
+//                set_str(&p->base.access, "write");
 //                p->base.index = index++;
 //                p->base.offset = 616;
 //                p->base.size = sizeof(scanner->user_params.image_processing.processing_mode);
-//                p->base.units = "";
+//                set_str(&p->base.units, "");
 
 //                p->val_uint32->value = scanner->user_params.image_processing.processing_mode;
 //                p->val_uint32->min = 0;
@@ -2903,12 +2991,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
                 //reduce_noise
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_processing_profPerSec";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "user_processing_profPerSec");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 618;
                 p->base.size = sizeof(scanner->user_params.image_processing.frame_rate);
-                p->base.units = "pps";
+                set_str(&p->base.units, "pps");
 
                 p->val_uint32->value = scanner->user_params.image_processing.frame_rate;
                 p->val_uint32->min = 0;
@@ -2920,18 +3008,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_processing_medianMode";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_processing_medianMode");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 622;
                 p->base.size = sizeof(scanner->user_params.image_processing.median_filter_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.image_processing.median_filter_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = medianFilterEnum;
+                p->val_uint32->enumValues = createParamEnum(kMedianFilterEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "Off");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2941,18 +3029,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_processing_bilateralMode";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_processing_bilateralMode");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 623;
                 p->base.size = sizeof(scanner->user_params.image_processing.bilateral_filter_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.image_processing.bilateral_filter_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = bilateralFilterEnum;
+                p->val_uint32->enumValues = createParamEnum(kBilateralFilterEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "Off");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2962,18 +3050,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_processing_peakMode";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_processing_peakMode");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 624;
                 p->base.size = sizeof(scanner->user_params.image_processing.peak_select_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.image_processing.peak_select_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 7;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = peakModeEnum;
+                p->val_uint32->enumValues = createParamEnum(kPeakModeEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "Max intensity");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -2983,18 +3071,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_processing_flip";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_processing_flip");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 625;
                 p->base.size = sizeof(scanner->user_params.image_processing.profile_flip);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.image_processing.profile_flip;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 7;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = flipEnum;
+                p->val_uint32->enumValues = createParamEnum(kFlipEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "no");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3005,18 +3093,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
                 //laser
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_laser_enabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_laser_enabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 682;
                 p->base.size = sizeof(scanner->user_params.laser.enable);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.laser.enable;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3026,12 +3114,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
 //                p = create_parameter_from_type("uint32_t");
-//                p->base.name = parameter_names[USER_LASER_ENABLED];
-//                p->base.access = "write";
+//                set_str(&p->base.name, parameter_names[USER_LASER_ENABLED];
+//                set_str(&p->base.access, "write");
 //                p->base.index = index++;
 //                p->base.offset = 683;
 //                p->base.size = sizeof(scanner->user_params.laser.level_mode);
-//                p->base.units = "";
+//                set_str(&p->base.units, "");
 
 //                p->val_uint32->value = scanner->user_params.laser.level_mode;
 //                p->val_uint32->min = 0;
@@ -3047,12 +3135,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_laser_value";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_laser_value");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 684;
                 p->base.size = sizeof(scanner->user_params.laser.level);
-                p->base.units = "%";
+                set_str(&p->base.units, "%");
 
                 p->val_uint32->value = scanner->user_params.laser.level;
                 p->val_uint32->min = 0;
@@ -3064,12 +3152,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
                 //inputs
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_trigger_sync_source";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_trigger_sync_source");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 718;
                 p->base.size = sizeof(scanner->user_params.inputs.preset_index);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.inputs.preset_index;
                 p->val_uint32->min = 0;
@@ -3081,13 +3169,13 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
 //                p = create_parameter_from_type("uint32_t");
-//                p->base.name = parameter_names[USER_INPUTS_PARAMS_MASK];
-//                p->base.access = "read_only";
+//                set_str(&p->base.name, parameter_names[USER_INPUTS_PARAMS_MASK];
+//                set_str(&p->base.access, "read_only");
 //                p->base.index = index++;
 //                p->base.offset = 719 + 26*scanner->user_params.inputs.preset_index;
 //                p->base.size = sizeof(scanner->user_params.inputs.params[
 //                                      scanner->user_params.inputs.preset_index].params_mask);
-//                p->base.units = "";
+//                set_str(&p->base.units, "");
 
 //                p->val_uint32->value = scanner->user_params.inputs.params[
 //                        scanner->user_params.inputs.preset_index].params_mask;
@@ -3099,20 +3187,20 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_input1_enabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_input1_enabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 721 + 26*scanner->user_params.inputs.preset_index;
                 p->base.size = sizeof(scanner->user_params.inputs.params[
                                       scanner->user_params.inputs.preset_index].in1_enable);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.inputs.params[
                         scanner->user_params.inputs.preset_index].in1_enable;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3122,20 +3210,20 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_input1_mode";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_input1_mode");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 722 + 26*scanner->user_params.inputs.preset_index;
                 p->base.size = sizeof(scanner->user_params.inputs.params[
                                       scanner->user_params.inputs.preset_index].in1_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.inputs.params[
                         scanner->user_params.inputs.preset_index].in1_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 3;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = input1ModeEnum;
+                p->val_uint32->enumValues = createParamEnum(kInput1ModeEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "Rise");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3145,13 +3233,13 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
 //                p = create_parameter_from_type("uint32_t");
-//                p->base.name = parameter_names[USER_INPUTS_1_DELAY];
-//                p->base.access = "write";
+//                set_str(&p->base.name, parameter_names[USER_INPUTS_1_DELAY];
+//                set_str(&p->base.access, "write");
 //                p->base.index = index++;
 //                p->base.offset = 723 + 26*scanner->user_params.inputs.preset_index;
 //                p->base.size = sizeof(scanner->user_params.inputs.params[
 //                                      scanner->user_params.inputs.preset_index].in1_delay);
-//                p->base.units = "ns";
+//                set_str(&p->base.units, "ns");
 
 //                p->val_uint32->value = scanner->user_params.inputs.params[
 //                        scanner->user_params.inputs.preset_index].in1_delay ;
@@ -3164,13 +3252,13 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_input1_samples";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_input1_samples");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 727 + 26*scanner->user_params.inputs.preset_index;
                 p->base.size = sizeof(scanner->user_params.inputs.params[
                                       scanner->user_params.inputs.preset_index].in1_decimation);
-                p->base.units = "ns";
+                set_str(&p->base.units, "ns");
 
                 p->val_uint32->value = scanner->user_params.inputs.params[
                         scanner->user_params.inputs.preset_index].in1_decimation ;
@@ -3183,20 +3271,20 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_input2_enabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_input2_enabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 728 + 26*scanner->user_params.inputs.preset_index;
                 p->base.size = sizeof(scanner->user_params.inputs.params[
                                       scanner->user_params.inputs.preset_index].in2_enable);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.inputs.params[
                         scanner->user_params.inputs.preset_index].in2_enable;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3206,20 +3294,20 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_input2_mode";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_input2_mode");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 729 + 26*scanner->user_params.inputs.preset_index;
                 p->base.size = sizeof(scanner->user_params.inputs.params[
                                       scanner->user_params.inputs.preset_index].in2_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.inputs.params[
                         scanner->user_params.inputs.preset_index].in2_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = input2ModeEnum;
+                p->val_uint32->enumValues = createParamEnum(kInput2ModeEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "Level");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3229,13 +3317,13 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
 //                p = create_parameter_from_type("uint32_t");
-//                p->base.name = parameter_names[USER_INPUTS_2_INVERSE];
-//                p->base.access = "write";
+//                set_str(&p->base.name, parameter_names[USER_INPUTS_2_INVERSE];
+//                set_str(&p->base.access, "write");
 //                p->base.index = index++;
 //                p->base.offset = 730 + 26*scanner->user_params.inputs.preset_index;
 //                p->base.size = sizeof(scanner->user_params.inputs.params[
 //                                      scanner->user_params.inputs.preset_index].in2_invert);
-//                p->base.units = "";
+//                set_str(&p->base.units, "");
 
 //                p->val_uint32->value = scanner->user_params.inputs.params[
 //                        scanner->user_params.inputs.preset_index].in2_invert;
@@ -3251,20 +3339,20 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_input3_enabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_input3_enabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 731 + 26*scanner->user_params.inputs.preset_index;
                 p->base.size = sizeof(scanner->user_params.inputs.params[
                                       scanner->user_params.inputs.preset_index].in3_enable);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.inputs.params[
                         scanner->user_params.inputs.preset_index].in3_enable;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3274,20 +3362,20 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name =  "user_input3_mode";
-                p->base.access = "write";
+                set_str(&p->base.name,  "user_input3_mode");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 732 + 26*scanner->user_params.inputs.preset_index;
                 p->base.size = sizeof(scanner->user_params.inputs.params[
                                       scanner->user_params.inputs.preset_index].in3_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.inputs.params[
                         scanner->user_params.inputs.preset_index].in3_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = input3ModeEnum;
+                p->val_uint32->enumValues = createParamEnum(kInput3ModeEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "Rise");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3297,18 +3385,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
                 //outputs
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_output1_enabled";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_output1_enabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 1063;
                 p->base.size = sizeof(scanner->user_params.outputs.out1_enable);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.outputs.out1_enable;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3318,18 +3406,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_output1_mode";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_output1_mode");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 1064;
                 p->base.size = sizeof(scanner->user_params.outputs.out1_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.outputs.out1_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 10;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = outputModeEnum;
+                p->val_uint32->enumValues = createParamEnum(kOutputModeEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "Exposure start");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3339,12 +3427,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
 //                p = create_parameter_from_type("uint32_t");
-//                p->base.name = parameter_names[USER_OUTPUTS_1_DELAY];
-//                p->base.access = "write";
+//                set_str(&p->base.name, parameter_names[USER_OUTPUTS_1_DELAY];
+//                set_str(&p->base.access, "write");
 //                p->base.index = index++;
 //                p->base.offset = 1065;
 //                p->base.size = sizeof(scanner->user_params.outputs.out1_delay);
-//                p->base.units = "ns";
+//                set_str(&p->base.units, "ns");
 
 //                p->val_uint32->value = scanner->user_params.outputs.out1_delay ;
 //                p->val_uint32->min = 220;
@@ -3356,12 +3444,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_output1_pulseWidth";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_output1_pulseWidth");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 1069;
                 p->base.size = sizeof(scanner->user_params.outputs.out1_pulse_width);
-                p->base.units = "ns";
+                set_str(&p->base.units, "ns");
 
                 p->val_uint32->value = scanner->user_params.outputs.out1_pulse_width ;
                 p->val_uint32->min = 10;
@@ -3373,12 +3461,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
 //                p = create_parameter_from_type("uint32_t");
-//                p->base.name = parameter_names[USER_OUTPUTS_1_INVERSE];
-//                p->base.access = "write";
+//                set_str(&p->base.name, parameter_names[USER_OUTPUTS_1_INVERSE];
+//                set_str(&p->base.access, "write");
 //                p->base.index = index++;
 //                p->base.offset = 1073;
 //                p->base.size = sizeof(scanner->user_params.outputs.out1_invert);
-//                p->base.units = "";
+//                set_str(&p->base.units, "");
 
 //                p->val_uint32->value = scanner->user_params.outputs.out1_invert;
 //                p->val_uint32->min = 0;
@@ -3394,18 +3482,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name =  "user_output2_enabled";
-                p->base.access = "write";
+                set_str(&p->base.name,  "user_output2_enabled");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 1074;
                 p->base.size = sizeof(scanner->user_params.outputs.out2_enable);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.outputs.out2_enable;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3415,18 +3503,18 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_output2_mode";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_output2_mode");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 1075;
                 p->base.size = sizeof(scanner->user_params.outputs.out2_mode);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->user_params.outputs.out2_mode;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 10;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = outputModeEnum;
+                p->val_uint32->enumValues = createParamEnum(kOutputModeEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "Exposure start");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -3436,12 +3524,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
 //                p = create_parameter_from_type("uint32_t");
-//                p->base.name = parameter_names[USER_OUTPUTS_2_DELAY];
-//                p->base.access = "write";
+//                set_str(&p->base.name, parameter_names[USER_OUTPUTS_2_DELAY];
+//                set_str(&p->base.access, "write");
 //                p->base.index = index++;
 //                p->base.offset = 1076;
 //                p->base.size = sizeof(scanner->user_params.outputs.out2_delay);
-//                p->base.units = "ns";
+//                set_str(&p->base.units, "ns");
 
 //                p->val_uint32->value = scanner->user_params.outputs.out2_delay ;
 //                p->val_uint32->min = 220;
@@ -3453,12 +3541,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_output2_pulseWidth";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_output2_pulseWidth");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 1080;
                 p->base.size = sizeof(scanner->user_params.outputs.out2_pulse_width);
-                p->base.units = "ns";
+                set_str(&p->base.units, "ns");
 
                 p->val_uint32->value = scanner->user_params.outputs.out2_pulse_width ;
                 p->val_uint32->min = 10;
@@ -3470,12 +3558,12 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 
 //                p = create_parameter_from_type("uint32_t");
-//                p->base.name = parameter_names[USER_OUTPUTS_2_INVERSE];
-//                p->base.access = "write";
+//                set_str(&p->base.name, parameter_names[USER_OUTPUTS_2_INVERSE];
+//                set_str(&p->base.access, "write");
 //                p->base.index = index++;
 //                p->base.offset = 1084;
 //                p->base.size = sizeof(scanner->user_params.outputs.out2_invert);
-//                p->base.units = "";
+//                set_str(&p->base.units, "");
 
 //                p->val_uint32->value = scanner->user_params.outputs.out2_invert;
 //                p->val_uint32->min = 0;
@@ -3503,816 +3591,6 @@ rfBool rf627_old_read_user_params_from_scanner(rf627_old_t* scanner)
 
 rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 {
-
-    char* key;
-    char* label;
-    int enum_index;
-
-    valuesEnum_t* boolEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    boolEnum->recCount = 2;
-    boolEnum->rec =  memory_platform.rf_calloc(boolEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "false";
-    label = "false";
-    boolEnum->rec[enum_index].value = 0;
-    boolEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(boolEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    boolEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(boolEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "true";
-    label = "false";
-    boolEnum->rec[enum_index].value = 0;
-    boolEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(boolEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    boolEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(boolEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* flipEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    flipEnum->recCount = 4;
-    flipEnum->rec =  memory_platform.rf_calloc(flipEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "No";
-    label = "No";
-    flipEnum->rec[enum_index].value = FM_NO;
-    flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "X";
-    label = "X";
-    flipEnum->rec[enum_index].value = FM_X;
-    flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Z";
-    label = "Z";
-    flipEnum->rec[enum_index].value = FM_Z;
-    flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "XZ";
-    label = "XZ";
-    flipEnum->rec[enum_index].value = FM_XZ;
-    flipEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    flipEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(flipEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* roiPosModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    roiPosModeEnum->recCount = 2;
-    roiPosModeEnum->rec =  memory_platform.rf_calloc(roiPosModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "manual";
-    label = "manual";
-    roiPosModeEnum->rec[enum_index].value = RPM_MANUAL;
-    roiPosModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    roiPosModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "auto";
-    label = "auto";
-    roiPosModeEnum->rec[enum_index].value = RPM_AUTO;
-    roiPosModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    roiPosModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(roiPosModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* netSpeedEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    netSpeedEnum->recCount = 3;
-    netSpeedEnum->rec =  memory_platform.rf_calloc(netSpeedEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "10";
-    label = "10";
-    netSpeedEnum->rec[enum_index].value = LS_10MBIT;
-    netSpeedEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    netSpeedEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "100";
-    label = "100";
-    netSpeedEnum->rec[enum_index].value = LS_100MBIT;
-    netSpeedEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    netSpeedEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "1000";
-    label = "1000";
-    netSpeedEnum->rec[enum_index].value = LS_1GBIT;
-    netSpeedEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    netSpeedEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(netSpeedEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* streamsFormatEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    streamsFormatEnum->recCount = 4;
-    streamsFormatEnum->rec =  memory_platform.rf_calloc(streamsFormatEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Pixels";
-    label = "Pixels";
-    streamsFormatEnum->rec[enum_index].value = DF_PIXELS;
-    streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Profile";
-    label = "Profile";
-    streamsFormatEnum->rec[enum_index].value = DF_PROFILE;
-    streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Interpolated pixels";
-    label = "Interpolated pixels";
-    streamsFormatEnum->rec[enum_index].value = DF_PIXELS_INTRP;
-    streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Interpolated profile";
-    label = "Interpolated profile";
-    streamsFormatEnum->rec[enum_index].value = DF_PROFILE_INTRP;
-    streamsFormatEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    streamsFormatEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(streamsFormatEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* processingModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    processingModeEnum->recCount = 2;
-    processingModeEnum->rec =  memory_platform.rf_calloc(processingModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "High accuracy";
-    label = "High accuracy";
-    processingModeEnum->rec[enum_index].value = PM_ACCURACY;
-    processingModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    processingModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Welding";
-    label = "Welding";
-    processingModeEnum->rec[enum_index].value = PM_WELDING;
-    processingModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    processingModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(processingModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* medianFilterEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    medianFilterEnum->recCount = 8;
-    medianFilterEnum->rec =  memory_platform.rf_calloc(medianFilterEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "0";
-    label = "0";
-    medianFilterEnum->rec[enum_index].value = 0;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "3";
-    label = "3";
-    medianFilterEnum->rec[enum_index].value = 3;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "5";
-    label = "5";
-    medianFilterEnum->rec[enum_index].value = 5;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "7";
-    label = "7";
-    medianFilterEnum->rec[enum_index].value = 7;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "9";
-    label = "9";
-    medianFilterEnum->rec[enum_index].value = 9;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "11";
-    label = "11";
-    medianFilterEnum->rec[enum_index].value = 11;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "13";
-    label = "13";
-    medianFilterEnum->rec[enum_index].value = 13;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "15";
-    label = "15";
-    medianFilterEnum->rec[enum_index].value = 15;
-    medianFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    medianFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(medianFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* bilateralFilterEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    bilateralFilterEnum->recCount = 8;
-    bilateralFilterEnum->rec =  memory_platform.rf_calloc(bilateralFilterEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "0";
-    label = "0";
-    bilateralFilterEnum->rec[enum_index].value = 0;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "3";
-    label = "3";
-    bilateralFilterEnum->rec[enum_index].value = 3;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "5";
-    label = "5";
-    bilateralFilterEnum->rec[enum_index].value = 5;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "7";
-    label = "7";
-    bilateralFilterEnum->rec[enum_index].value = 7;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "9";
-    label = "9";
-    bilateralFilterEnum->rec[enum_index].value = 9;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "11";
-    label = "11";
-    bilateralFilterEnum->rec[enum_index].value = 11;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "13";
-    label = "13";
-    bilateralFilterEnum->rec[enum_index].value = 13;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "15";
-    label = "15";
-    bilateralFilterEnum->rec[enum_index].value = 15;
-    bilateralFilterEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    bilateralFilterEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(bilateralFilterEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* peakModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    peakModeEnum->recCount = 8;
-    peakModeEnum->rec =  memory_platform.rf_calloc(peakModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Max intensity";
-    label = "Max intensity";
-    peakModeEnum->rec[enum_index].value = PM_MAX_INTENSITY;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "First";
-    label = "First";
-    peakModeEnum->rec[enum_index].value = PM_FIRST;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Last";
-    label = "Last";
-    peakModeEnum->rec[enum_index].value = PM_LAST;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#2";
-    label = "#2";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_2;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#3";
-    label = "#3";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_3;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#4";
-    label = "#4";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_4;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#5";
-    label = "#5";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_5;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "#6";
-    label = "#6";
-    peakModeEnum->rec[enum_index].value = PM_NUMBER_6;
-    peakModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    peakModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(peakModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* laserModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    laserModeEnum->recCount = 2;
-    laserModeEnum->rec =  memory_platform.rf_calloc(laserModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Always on";
-    label = "Always on";
-    laserModeEnum->rec[enum_index].value = LASER_ALWAYS_ZERO;
-    laserModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    laserModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Expose sync";
-    label = "Expose sync";
-    laserModeEnum->rec[enum_index].value = LASER_STROBE_INV;
-    laserModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    laserModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(laserModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-
-    valuesEnum_t* input1EventEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    input1EventEnum->recCount = 3;
-    input1EventEnum->rec =  memory_platform.rf_calloc(input1EventEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Internal generator";
-    label = "Internal generator";
-    input1EventEnum->rec[enum_index].value = IN1_EVENT_IGEN;
-    input1EventEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1EventEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "External sync";
-    label = "External sync";
-    input1EventEnum->rec[enum_index].value = IN1_EVENT_EXT;
-    input1EventEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1EventEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Software request";
-    label = "Software request";
-    input1EventEnum->rec[enum_index].value = IN1_EVENT_SREQ;
-    input1EventEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1EventEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1EventEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* input1ModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    input1ModeEnum->recCount = 4;
-    input1ModeEnum->rec =  memory_platform.rf_calloc(input1ModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Rise";
-    label = "Rise";
-    input1ModeEnum->rec[enum_index].value = IN1_MODE_RISE;
-    input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Fall";
-    label = "Fall";
-    input1ModeEnum->rec[enum_index].value = IN1_MODE_FALL;
-    input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "High level";
-    label = "High level";
-    input1ModeEnum->rec[enum_index].value = IN1_MODE_LVL1;
-    input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Low level";
-    label = "Low level";
-    input1ModeEnum->rec[enum_index].value = IN1_MODE_LVL0;
-    input1ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input1ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input1ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* input2ModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    input2ModeEnum->recCount = 2;
-    input2ModeEnum->rec =  memory_platform.rf_calloc(input2ModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Level";
-    label = "Level";
-    input2ModeEnum->rec[enum_index].value = IN2_MODE_LVL;
-    input2ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input2ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Phase";
-    label = "Phase";
-    input2ModeEnum->rec[enum_index].value = IN2_MODE_PHASE;
-    input2ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input2ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input2ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-
-
-
-    valuesEnum_t* input3ModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    input3ModeEnum->recCount = 2;
-    input3ModeEnum->rec =  memory_platform.rf_calloc(input3ModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Rise";
-    label = "Rise";
-    input3ModeEnum->rec[enum_index].value = IN3_MODE_RISE;
-    input3ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input3ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Fall";
-    label = "Fall";
-    input3ModeEnum->rec[enum_index].value = IN3_MODE_FALL;
-    input3ModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    input3ModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(input3ModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-    valuesEnum_t* outputModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    outputModeEnum->recCount = 11;
-    outputModeEnum->rec =  memory_platform.rf_calloc(outputModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Exposure start";
-    label = "Exposure start";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_EXP_START;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In1 level";
-    label = "In1 level";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN1_LOG_LVL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In1 rise";
-    label = "In1 rise";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN1_RISE;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In1 fall";
-    label = "In1 fall";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN1_FALL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In2 level";
-    label = "In2 level";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN2_LOG_LVL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In2 rise";
-    label = "In2 rise";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN2_RISE;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In2 fall";
-    label = "In2 fall";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN2_FALL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In3 level";
-    label = "In3 level";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN3_LOG_LVL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In3 rise";
-    label = "In3 rise";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN3_RISE;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "In3 fall";
-    label = "In3 fall";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_IN3_FALL;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Exposure time";
-    label = "Exposure time";
-    outputModeEnum->rec[enum_index].value = OUT_MODE_EXP_TIME;
-    outputModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    outputModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(outputModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-
-
-    valuesEnum_t* motionTypeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    motionTypeEnum->recCount = 2;
-    motionTypeEnum->rec =  memory_platform.rf_calloc(motionTypeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Linear";
-    label = "Linear";
-    motionTypeEnum->rec[enum_index].value = 0;
-    motionTypeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    motionTypeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Radial";
-    label = "Radial";
-    motionTypeEnum->rec[enum_index].value = 1;
-    motionTypeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    motionTypeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(motionTypeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* ySourceEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    ySourceEnum->recCount = 3;
-    ySourceEnum->rec =  memory_platform.rf_calloc(ySourceEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "System time";
-    label = "System time";
-    ySourceEnum->rec[enum_index].value = YA_SYSTEM_TIME;
-    ySourceEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    ySourceEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Step counter";
-    label = "Step counter";
-    ySourceEnum->rec[enum_index].value = YA_STEP_COUNTER;
-    ySourceEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    ySourceEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Measures counter";
-    label = "Measures counter";
-    ySourceEnum->rec[enum_index].value = YA_MEASURES_COUNTER;
-    ySourceEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    ySourceEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(ySourceEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-
-
-
-    valuesEnum_t* paintModeEnum = memory_platform.rf_calloc(1, sizeof(valuesEnum_t));
-    paintModeEnum->recCount = 2;
-    paintModeEnum->rec =  memory_platform.rf_calloc(paintModeEnum->recCount, sizeof(enumRec_t));
-    enum_index = 0;
-
-    key = "Heightmap";
-    label = "Heightmap";
-    paintModeEnum->rec[enum_index].value = 0;
-    paintModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    paintModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
-    key = "Intensity";
-    label = "Intensity";
-    paintModeEnum->rec[enum_index].value = 1;
-    paintModeEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
-    memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
-    paintModeEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
-    memory_platform.rf_memcpy(paintModeEnum->rec[enum_index].label, label, rf_strlen(label) + 1);
-    enum_index++;
-
     rfSize RX_SIZE = rf627_protocol_old_get_size_of_header() + RF627_MAX_PAYLOAD_SIZE;
     rfUint8* RX = memory_platform.rf_calloc(1, RX_SIZE);
     rfSize TX_SIZE = rf627_protocol_old_get_size_of_header() + RF627_MAX_PAYLOAD_SIZE;
@@ -4379,12 +3657,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
                 rfUint16 index = 0;
                 parameter_t* p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_productCode";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_productCode");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 0;
                 p->base.size = sizeof(scanner->factory_params.general.device_id);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.general.device_id;
                 p->val_uint32->min = 0;
@@ -4396,12 +3674,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_serial";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_serial");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 2;
                 p->base.size = sizeof(scanner->factory_params.general.serial);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.general.serial;
                 p->val_uint32->min = 0;
@@ -4413,12 +3691,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_pcbSerial";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_pcbSerial");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 6;
                 p->base.size = sizeof(scanner->factory_params.general.serial_of_pcb);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.general.serial_of_pcb;
                 p->val_uint32->min = 0;
@@ -4430,12 +3708,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_lifeTime";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_lifeTime");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 10;
                 p->base.size = sizeof(scanner->factory_params.general.operating_time_h);
-                p->base.units = "s";
+                set_str(&p->base.units, "s");
 
                 p->val_uint32->value =
                         scanner->factory_params.general.operating_time_h * 60 * 60 +
@@ -4450,12 +3728,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_workTime";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_workTime");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 16;
                 p->base.size = sizeof(scanner->factory_params.general.runtime_h);
-                p->base.units = "s";
+                set_str(&p->base.units, "s");
 
                 p->val_uint32->value =
                         scanner->factory_params.general.runtime_h * 60 * 60 +
@@ -4470,12 +3748,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_startsCount";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_startsCount");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 22;
                 p->base.size = sizeof(scanner->factory_params.general.startup_counter);
-                p->base.units = "count";
+                set_str(&p->base.units, "count");
 
                 p->val_uint32->value = scanner->factory_params.general.startup_counter;
                 p->val_uint32->min = 0;
@@ -4487,12 +3765,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_firmwareVer";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_firmwareVer");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 26;
                 p->base.size = sizeof(scanner->factory_params.general.firmware_ver);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.general.firmware_ver;
                 p->val_uint32->min = 0;
@@ -4504,12 +3782,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_hardwareVer";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_hardwareVer");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 30;
                 p->base.size = sizeof(scanner->factory_params.general.hardware_ver);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.general.hardware_ver;
                 p->val_uint32->min = 0;
@@ -4521,12 +3799,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_customerID";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_customerID");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 34;
                 p->base.size = sizeof(scanner->factory_params.general.customer_id);
-                p->base.units = "id";
+                set_str(&p->base.units, "id");
 
                 p->val_uint32->value = scanner->factory_params.general.customer_id;
                 p->val_uint32->min = 0;
@@ -4538,12 +3816,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_fpgaFreq";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_fpgaFreq");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 38;
                 p->base.size = sizeof(scanner->factory_params.general.fpga_freq);
-                p->base.units = "Hz";
+                set_str(&p->base.units, "Hz");
 
                 p->val_uint32->value = scanner->factory_params.general.fpga_freq;
                 p->val_uint32->min = 100000000;
@@ -4555,12 +3833,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_smr";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_smr");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 42;
                 p->base.size = sizeof(scanner->factory_params.general.base_z);
-                p->base.units = "mm";
+                set_str(&p->base.units, "mm");
 
                 p->val_uint32->value = scanner->factory_params.general.base_z;
                 p->val_uint32->min = 0;
@@ -4572,12 +3850,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_mr";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_mr");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 46;
                 p->base.size = sizeof(scanner->factory_params.general.range_z);
-                p->base.units = "mm";
+                set_str(&p->base.units, "mm");
 
                 p->val_uint32->value = scanner->factory_params.general.range_z;
                 p->val_uint32->min = 0;
@@ -4589,12 +3867,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_xsmr";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_xsmr");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 50;
                 p->base.size = sizeof(scanner->factory_params.general.range_x_start);
-                p->base.units = "mm";
+                set_str(&p->base.units, "mm");
 
                 p->val_uint32->value = scanner->factory_params.general.range_x_start;
                 p->val_uint32->min = 0;
@@ -4606,12 +3884,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_xemr";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_xemr");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 54;
                 p->base.size = sizeof(scanner->factory_params.general.range_x_end);
-                p->base.units = "mm";
+                set_str(&p->base.units, "mm");
 
                 p->val_uint32->value = scanner->factory_params.general.range_x_end;
                 p->val_uint32->min = 0;
@@ -4623,12 +3901,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_pixDivider";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_pixDivider");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 58;
                 p->base.size = sizeof(scanner->factory_params.general.pixels_divider);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.general.pixels_divider;
                 p->val_uint32->min = 0;
@@ -4640,12 +3918,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_profDivider";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_profDivider");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 60;
                 p->base.size = sizeof(scanner->factory_params.general.profiles_divider);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.general.profiles_divider;
                 p->val_uint32->min = 0;
@@ -4657,12 +3935,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_general_FsblRev";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_general_FsblRev");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 62;
                 p->base.size = sizeof(scanner->factory_params.general.fsbl_version);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.general.fsbl_version;
                 p->val_uint32->min = 0;
@@ -4674,12 +3952,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("string_t");
-                p->base.name =  "fact_general_oemDevName";
-                p->base.access = "locked";
+                set_str(&p->base.name,  "fact_general_oemDevName");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 66;
                 p->base.size = rf_strlen(scanner->factory_params.general.oem_device_name) + 1;
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_str->value = memory_platform.rf_calloc(1, sizeof(rfChar) * p->base.size);
                 memory_platform.rf_memcpy(
@@ -4687,18 +3965,18 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
                             scanner->factory_params.general.oem_device_name,
                             p->base.size);
                 p->val_str->maxLen = sizeof (scanner->factory_params.general.oem_device_name);
-                p->val_str->defValue = "Laser scanner";
+                set_str(&p->val_str->defValue, "Laser scanner");
                 vector_add(scanner->params_list, p);
 
 
 
                 p = create_parameter_from_type("string_t");
-                p->base.name = "fact_sensor_name";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_name");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 158;
                 p->base.size = rf_strlen(scanner->factory_params.sensor.name) + 1;
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_str->value = memory_platform.rf_calloc(1, sizeof(rfChar) * p->base.size);
                 memory_platform.rf_memcpy(
@@ -4706,18 +3984,18 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
                             scanner->factory_params.sensor.name,
                             p->base.size);
                 p->val_str->maxLen = sizeof (scanner->factory_params.sensor.name);
-                p->val_str->defValue = "TYPE1";
+                set_str(&p->val_str->defValue, "TYPE1");
                 vector_add(scanner->params_list, p);
 
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_width";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_width");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 190;
                 p->base.size = sizeof(scanner->factory_params.sensor.width);
-                p->base.units = "pixels";
+                set_str(&p->base.units, "pixels");
 
                 p->val_uint32->value = scanner->factory_params.sensor.width;
                 p->val_uint32->min = 648;
@@ -4729,12 +4007,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_height";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_height");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 192;
                 p->base.size = sizeof(scanner->factory_params.sensor.height);
-                p->base.units = "lines";
+                set_str(&p->base.units, "lines");
 
                 p->val_uint32->value = scanner->factory_params.sensor.height;
                 p->val_uint32->min = 488;
@@ -4746,12 +4024,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_pixFreq";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_pixFreq");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 194;
                 p->base.size = sizeof(scanner->factory_params.sensor.pixel_clock);
-                p->base.units = "Hz";
+                set_str(&p->base.units, "Hz");
 
                 p->val_uint32->value = scanner->factory_params.sensor.pixel_clock;
                 p->val_uint32->min = 40000000;
@@ -4763,12 +4041,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_blackOdd";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_blackOdd");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 198;
                 p->base.size = sizeof(scanner->factory_params.sensor.black_odd_lines);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.sensor.black_odd_lines;
                 p->val_uint32->min = 0;
@@ -4780,12 +4058,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_blackEven";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_blackEven");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 200;
                 p->base.size = sizeof(scanner->factory_params.sensor.black_even_lines);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.sensor.black_even_lines;
                 p->val_uint32->min = 0;
@@ -4797,12 +4075,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_frmConstPart";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_frmConstPart");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 202;
                 p->base.size = sizeof(scanner->factory_params.sensor.frame_cycle_const_part);
-                p->base.units = "ticks";
+                set_str(&p->base.units, "ticks");
 
                 p->val_uint32->value = scanner->factory_params.sensor.frame_cycle_const_part;
                 p->val_uint32->min = 6500;
@@ -4814,12 +4092,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_frmPerLinePart";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_frmPerLinePart");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 206;
                 p->base.size = sizeof(scanner->factory_params.sensor.frame_cycle_per_line_part);
-                p->base.units = "ticks";
+                set_str(&p->base.units, "ticks");
 
                 p->val_uint32->value = scanner->factory_params.sensor.frame_cycle_per_line_part;
                 p->val_uint32->min = 410;
@@ -4831,18 +4109,18 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_FrameRate_or_Exposure";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_FrameRate_or_Exposure");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 210;
                 p->base.size = sizeof(scanner->factory_params.sensor.frame_rate_or_exposure);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.sensor.frame_rate_or_exposure;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 1;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = boolEnum;
+                p->val_uint32->enumValues = createParamEnum(kBoolEnum);
                 rfInt* def = get_value_by_key_from_enum(p->val_uint32->enumValues, "false");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -4852,12 +4130,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_minExposure";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_minExposure");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 211;
                 p->base.size = sizeof(scanner->factory_params.sensor.min_exposure);
-                p->base.units = "ns";
+                set_str(&p->base.units, "ns");
 
                 p->val_uint32->value = scanner->factory_params.sensor.min_exposure;
                 p->val_uint32->min = 0;
@@ -4869,18 +4147,18 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_imgFlip";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_imgFlip");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 215;
                 p->base.size = sizeof(scanner->factory_params.sensor.image_flipping);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.sensor.image_flipping;
                 p->val_uint32->min = 0;
                 p->val_uint32->max = 3;
                 p->val_uint32->step = 0;
-                p->val_uint32->enumValues = flipEnum;
+                p->val_uint32->enumValues = createParamEnum(kFlipEnum);
                 def = get_value_by_key_from_enum(p->val_uint32->enumValues, "No");
                 if (def != NULL)
                     p->val_uint32->defValue = *def;
@@ -4890,12 +4168,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_sensor_maxExposure";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_sensor_maxExposure");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 216;
                 p->base.size = sizeof(scanner->factory_params.sensor.max_exposure);
-                p->base.units = "ns";
+                set_str(&p->base.units, "ns");
 
                 p->val_uint32->value = scanner->factory_params.sensor.max_exposure;
                 p->val_uint32->min = 0;
@@ -4912,12 +4190,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("u32_arr_t");
-                p->base.name = "fact_network_macAddr";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_network_macAddr");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 595;
                 p->base.size = sizeof (scanner->factory_params.network.mac);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->arr_uint32->value = memory_platform.rf_calloc(1, sizeof(rfUint32) * 6);
                 for (rfUint32 i = 0; i < p->base.size; i++)
@@ -4937,12 +4215,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_eip_vendor_id";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_eip_vendor_id");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 601;
                 p->base.size = sizeof(scanner->factory_params.network.eip_vendor_id);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.network.eip_vendor_id;
                 p->val_uint32->min = 0;
@@ -4955,12 +4233,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_eip_device_type";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_eip_device_type");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 603;
                 p->base.size = sizeof(scanner->factory_params.network.eip_device_type);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.network.eip_device_type;
                 p->val_uint32->min = 0;
@@ -4973,12 +4251,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_network_forceAutoNegTime";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_network_forceAutoNegTime");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 605;
                 p->base.size = sizeof(scanner->factory_params.network.force_autoneg_time);
-                p->base.units = "s";
+                set_str(&p->base.units, "s");
 
                 p->val_uint32->value = scanner->factory_params.network.force_autoneg_time;
                 p->val_uint32->min = 0;
@@ -4991,12 +4269,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_laser_waveLength";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_laser_waveLength");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 637;
                 p->base.size = sizeof(scanner->factory_params.laser.wave_length);
-                p->base.units = "nm";
+                set_str(&p->base.units, "nm");
 
                 p->val_uint32->value = scanner->factory_params.laser.wave_length;
                 p->val_uint32->min = 0;
@@ -5009,12 +4287,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_laser_koeff1";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "fact_laser_koeff1");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 639;
                 p->base.size = sizeof(scanner->factory_params.laser.koeff1);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.laser.koeff1;
                 p->val_uint32->min = 0;
@@ -5027,12 +4305,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_laser_koeff2";
-                p->base.access = "read_only";
+                set_str(&p->base.name, "fact_laser_koeff2");
+                set_str(&p->base.access, "read_only");
                 p->base.index = index++;
                 p->base.offset = 640;
                 p->base.size = sizeof(scanner->factory_params.laser.koeff2);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.laser.koeff2;
                 p->val_uint32->min = 0;
@@ -5045,12 +4323,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_laser_minValue";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_laser_minValue");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 641;
                 p->base.size = sizeof(scanner->factory_params.laser.min_value);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.laser.min_value;
                 p->val_uint32->min = 0;
@@ -5063,12 +4341,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "fact_laser_maxValue";
-                p->base.access = "locked";
+                set_str(&p->base.name, "fact_laser_maxValue");
+                set_str(&p->base.access, "locked");
                 p->base.index = index++;
                 p->base.offset = 645;
                 p->base.size = sizeof(scanner->factory_params.laser.max_value);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.laser.max_value;
                 p->val_uint32->min = 0;
@@ -5096,12 +4374,12 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
 
                 p = create_parameter_from_type("uint32_t");
-                p->base.name = "user_dump_size";
-                p->base.access = "write";
+                set_str(&p->base.name, "user_dump_size");
+                set_str(&p->base.access, "write");
                 p->base.index = index++;
                 p->base.offset = 809;
                 p->base.size = sizeof(scanner->factory_params.profiles.max_dump_size);
-                p->base.units = "";
+                set_str(&p->base.units, "");
 
                 p->val_uint32->value = scanner->factory_params.profiles.max_dump_size;
                 p->val_uint32->min = 0;
@@ -5461,6 +4739,65 @@ rfBool rf627_old_write_params_to_scanner(rf627_old_t* scanner)
 
 }
 
+rfBool rf627_old_save_params_to_scanner(rf627_old_t* scanner)
+{
+    rfSize RX_SIZE = rf627_protocol_old_get_size_of_header() + RF627_MAX_PAYLOAD_SIZE;
+    rfUint8* RX = memory_platform.rf_calloc(1, RX_SIZE);
+    rfSize TX_SIZE = rf627_protocol_old_get_size_of_header() + RF627_MAX_PAYLOAD_SIZE;
+    rfUint8* TX =  memory_platform.rf_calloc(1, TX_SIZE);
+
+    rfUint32 dst_ip_addr;
+    rfUint16 dst_port;
+    rfBool ret = 1;
+
+    // create write_params msg request
+    rf627_old_header_msg_t write_user_params_msg =
+            rf627_protocol_old_create_save_user_params_msg_request(
+                kRF627_OLD_PROTOCOL_HEADER_CONFIRMATION_ON,
+                scanner->factory_params.general.serial,
+                scanner->msg_count);
+
+    // pack hello msg request to packet
+    rfUint32 request_packet_size =
+            rf627_protocol_old_pack_save_user_params_msg_request_to_packet(
+                (rfUint8*)TX, TX_SIZE, &write_user_params_msg);
+
+    //send_addr.sin_family = RF_AF_INET;
+    dst_ip_addr = scanner->user_params.network.ip_address[0] << 24 |
+                  scanner->user_params.network.ip_address[1] << 16 |
+                  scanner->user_params.network.ip_address[2] << 8 |
+                  scanner->user_params.network.ip_address[3];
+    dst_port = scanner->user_params.network.service_port;
+
+
+    if (rf627_protocol_send_packet_by_udp(
+                scanner->m_svc_sock, TX, request_packet_size, dst_ip_addr, dst_port, 0, NULL))
+    {
+        scanner->msg_count++;
+
+        const rfInt data_len =
+                rf627_protocol_old_get_size_of_response_save_user_params_packet();
+        rfInt nret = network_platform.network_methods.recv_data(
+                    scanner->m_svc_sock, RX, data_len);
+        if (nret == data_len)
+        {
+            rfSize confirm_packet_size =
+                    rf627_protocol_old_create_confirm_packet_from_response_packet(
+                        TX, TX_SIZE, RX, RX_SIZE);
+            if(confirm_packet_size > 0)
+            {
+                rf627_protocol_send_packet_by_udp(
+                            scanner->m_svc_sock, TX, confirm_packet_size, dst_ip_addr, dst_port, 0, 0);
+            }
+        }
+    }
+
+    memory_platform.rf_free(RX);
+    memory_platform.rf_free(TX);
+    return ret;
+
+}
+
 parameter_t* rf627_old_get_parameter(
         rf627_old_t* scanner, const rfChar* param_name)
 {
@@ -5485,55 +4822,67 @@ rfUint8 rf627_old_set_parameter(
         {
             if (rf_strcmp(p->base.type, "string_t") == 0)
             {
+                memory_platform.rf_free(p->val_str->value);
+                p->val_str->value = memory_platform.rf_calloc(param->base.size, sizeof (rfChar));
                 memory_platform.rf_memcpy(
                             (void*)p->val_str->value,
                             param->val_str->value,
                             param->base.size);
                 p->base.size = param->base.size;
-                return 0;
+                p->is_changed = TRUE;
+                return TRUE;
             }
             else if (rf_strcmp(p->base.type, "int32_t") == 0)
             {
                 p->val_int32->value = param->val_int32->value;
-                return 0;
+                p->is_changed = TRUE;
+                return TRUE;
             }
             else if (rf_strcmp(p->base.type, "int64_t") == 0)
             {
                 p->val_int64->value = param->val_int64->value;
-                return 0;
+                p->is_changed = TRUE;
+                return TRUE;
             }
             else if (rf_strcmp(p->base.type, "uint32_t") == 0)
             {
                 p->val_uint32->value = param->val_uint32->value;
-                return 0;
+                p->is_changed = TRUE;
+                return TRUE;
             }
             else if (rf_strcmp(p->base.type, "uint64_t") == 0)
             {
                 p->val_uint64->value = param->val_uint64->value;
-                return 0;
+                p->is_changed = TRUE;
+                return TRUE;
             }
             else if (rf_strcmp(p->base.type, "float_t") == 0)
             {
                 p->val_flt->value = param->val_flt->value;
-                return 0;
+                p->is_changed = TRUE;
+                return TRUE;
             }
             else if (rf_strcmp(p->base.type, "double_t") == 0)
             {
                 p->val_dbl->value = param->val_dbl->value;
-                return 0;
+                p->is_changed = TRUE;
+                return TRUE;
             }else if (rf_strcmp(p->base.type, "u32_arr_t") == 0)
             {
+                memory_platform.rf_free(p->arr_uint32->value);
+                p->arr_uint32->value = memory_platform.rf_calloc(param->base.size, sizeof (uint8_t));
                 memory_platform.rf_memcpy(
                             (void*)p->arr_uint32->value,
                             param->arr_uint32->value,
                             param->base.size);
-                //p->base.size = param->base.size;
-                return 0;
+                p->base.size = param->base.size;
+                p->is_changed = TRUE;
+                return TRUE;
             }
 
         }
     }
-    return 1;
+    return FALSE;
 }
 
 rfUint8 rf627_old_set_parameter_by_name(

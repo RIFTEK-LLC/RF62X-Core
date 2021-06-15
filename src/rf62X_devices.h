@@ -38,7 +38,7 @@ typedef struct
  * @param ip_addr - the IP address of the adapter on which the connection should be established.
  * @return 0 on success
  */
-uint8_t rf627_old_search_by_service_protocol(vector_t* list, rfUint32 ip_addr);
+uint8_t rf627_old_search_by_service_protocol(vector_t* list, rfUint32 ip_addr, rfUint32 timeout);
 
 
 /**
@@ -120,6 +120,13 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner);
  * @return 0 on success
  */
 rfBool rf627_old_write_params_to_scanner(rf627_old_t* scanner);
+
+/**
+ * @brief rf627_old_save_params_to_scanner - Save current parameters to device.
+ * @param scanner - ptr to scanner
+ * @return 0 on success
+ */
+rfBool rf627_old_save_params_to_scanner(rf627_old_t* scanner);
 
 /**
  * @brief rf627_old_get_parameter - Search parameters by his name
