@@ -3261,7 +3261,7 @@ rfInt8 rf627_smart_get_frame_callback(char* data, uint32_t data_size, uint32_t d
         }
     }
 
-    if (index != -1)
+    if (index != -1 && data_size > 0)
     {
         // Get params
         mpack_tree_t tree;
