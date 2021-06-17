@@ -2640,7 +2640,69 @@ rfInt8 rf627_smart_write_params_callback(char* data, uint32_t data_size, uint32_
     TRACE(TRACE_LEVEL_DEBUG, "+ Get answer to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
            ((RF62X_msg_t*)rqst_msg)->cmd_name, ((RF62X_msg_t*)rqst_msg)->_uid, data_size);
 
-    return TRUE;
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
+
+    // Get params
+    mpack_tree_t tree;
+    mpack_tree_init_data(&tree, (const char*)data, data_size);
+    mpack_tree_parse(&tree);
+    if (mpack_tree_error(&tree) != mpack_ok)
+    {
+        status = FALSE;
+        mpack_tree_destroy(&tree);
+        return status;
+    }
+
+    for (rfUint32 i = 0; i < vector_count(search_result); i++)
+    {
+        if(((scanner_base_t*)vector_get(search_result, i))->type == kRF627_SMART)
+        {
+            uint32_t serial = ((scanner_base_t*)vector_get(search_result, i))->rf627_smart->info_by_service_protocol.fact_general_serial;
+            if (serial == device_id)
+                existing = TRUE;
+        }
+    }
+
+    if (existing)
+    {
+        RF62X_msg_t* msg = rqst_msg;
+        typedef struct
+        {
+            char* param_name;
+            char* result;
+        }param_result;
+
+        typedef struct
+        {
+            uint32_t params_count;
+            param_result* params;
+        }answer;
+
+        mpack_node_t root = mpack_tree_root(&tree);
+        rfUint32 params_count = mpack_node_map_count(root);
+
+        if (msg->result == NULL)
+        {
+            msg->result = calloc(1, sizeof (answer));
+            ((answer*)msg->result)->params_count = params_count;
+            ((answer*)msg->result)->params = calloc(params_count, sizeof(param_result));
+        }
+
+
+        for (rfUint32 i = 0; i < params_count; i++)
+        {
+            ((answer*)msg->result)->params[i].param_name = mpack_node_cstr_alloc(
+                        mpack_node_map_key_at(root, i), mpack_node_strlen(mpack_node_map_key_at(root, i)) + 1);
+            ((answer*)msg->result)->params[i].result = mpack_node_cstr_alloc(
+                        mpack_node_map_value_at(root, i), mpack_node_strlen(mpack_node_map_value_at(root, i)) + 1);
+        }
+
+        status = TRUE;
+    }
+
+    mpack_tree_destroy(&tree);
+    return status;
 }
 rfInt8 rf627_smart_write_params_timeout_callback(void* rqst_msg)
 {
@@ -2660,6 +2722,24 @@ rfInt8 rf627_smart_write_params_free_result_callback(void* rqst_msg)
 
     if (msg->result != NULL)
     {
+        typedef struct
+        {
+            char* param_name;
+            char* result;
+        }param_result;
+
+        typedef struct
+        {
+            uint32_t params_count;
+            param_result* params;
+        }answer;
+
+        for (uint32_t i = 0; i < ((answer*)msg->result)->params_count; i++)
+        {
+            free(((answer*)msg->result)->params[i].param_name);
+            free(((answer*)msg->result)->params[i].result);
+        }
+        free(((answer*)msg->result)->params);
         free(msg->result);
         msg->result = NULL;
     }
@@ -2778,7 +2858,7 @@ rfBool rf627_smart_write_params_to_scanner(rf627_smart_t* scanner, rfUint32 time
         uint32_t data_size                  = (rfUint32)bytes;
         char* data_type                     = "mpack";
         uint8_t is_check_crc                = FALSE;
-        uint8_t is_confirmation             = FALSE;
+        uint8_t is_confirmation             = TRUE;
         uint8_t is_one_answ                 = TRUE;
         uint32_t waiting_time               = timeout;
         RF62X_answ_callback answ_clb        = rf627_smart_write_params_callback;
@@ -2798,6 +2878,45 @@ rfBool rf627_smart_write_params_to_scanner(rf627_smart_t* scanner, rfUint32 time
         else
         {
             TRACE(TRACE_LEVEL_DEBUG, "%s", "Requests were sent.\n");
+        }
+
+        void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, 1000);
+        if (result != NULL)
+        {
+            typedef struct
+            {
+                char* param_name;
+                char* result;
+            }param_result;
+
+            typedef struct
+            {
+                uint32_t params_count;
+                param_result* params;
+            }answer;
+
+            rfBool status = TRUE;
+            for (uint32_t i = 0; i < ((answer*)result)->params_count; i++)
+            {
+                if (rf_strcmp(((answer*)result)->params[i].result, "RF_OK") != 0)
+                {
+                    status = FALSE;
+                    TRACE(TRACE_LEVEL_WARNING, "Parameter \"%s\" hasn't been set\n", ((answer*)result)->params[i].param_name);
+                }
+            }
+
+            if (status)
+            {
+                // Cleanup test msg
+                RF62X_cleanup_msg(msg);
+                free(msg); msg = NULL;
+                return TRUE;
+            }
+
+            // Cleanup test msg
+            RF62X_cleanup_msg(msg);
+            free(msg); msg = NULL;
+            return FALSE;
         }
 
         // Cleanup test msg
