@@ -263,7 +263,7 @@ rf627_profile2D_t* get_profile2D_from_scanner(
                                 ((scanner_base_t*)device)->rf627_old->m_data_sock);
 
                     network_platform.network_methods.set_socket_recv_timeout(
-                                ((scanner_base_t*)device)->rf627_old->m_data_sock, 100);
+                                ((scanner_base_t*)device)->rf627_old->m_data_sock, STREAM_SOCK_RECV_TIMEOUT);
                     //recv_addr.sin_family = RF_AF_INET;
                     recv_port = ((scanner_base_t*)device)->rf627_old->info_by_service_protocol.profile_port;
 
@@ -322,7 +322,7 @@ rf627_profile2D_t* get_profile2D_from_scanner(
                                 ((scanner_base_t*)device)->rf627_smart->m_data_sock);
 
                     network_platform.network_methods.set_socket_recv_timeout(
-                                ((scanner_base_t*)device)->rf627_smart->m_data_sock, 100);
+                                ((scanner_base_t*)device)->rf627_smart->m_data_sock, STREAM_SOCK_RECV_TIMEOUT);
                     //recv_addr.sin_family = RF_AF_INET;
                     recv_port = ((scanner_base_t*)device)->rf627_smart->info_by_service_protocol.user_network_hostPort;
 

@@ -339,7 +339,7 @@ rfBool rf627_smart_connect(rf627_smart_t* scanner)
             network_platform.network_methods.set_reuseaddr_socket_option(scanner->m_data_sock);
 
             network_platform.network_methods.set_socket_recv_timeout(
-                        scanner->m_data_sock, 100);
+                        scanner->m_data_sock, STREAM_SOCK_RECV_TIMEOUT);
             //recv_addr.sin_family = RF_AF_INET;
             recv_port = scanner->info_by_service_protocol.user_network_hostPort;
 
@@ -2880,7 +2880,7 @@ rfBool rf627_smart_write_params_to_scanner(rf627_smart_t* scanner, rfUint32 time
             TRACE(TRACE_LEVEL_DEBUG, "%s", "Requests were sent.\n");
         }
 
-        void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, 1000);
+        void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
         if (result != NULL)
         {
             typedef struct
