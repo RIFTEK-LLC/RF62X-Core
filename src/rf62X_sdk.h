@@ -15,7 +15,7 @@
 #include "rf62X_devices.h"
 #include "rf62X_types.h"
 
-#define STREAM_SOCK_RECV_TIMEOUT 1
+#define STREAM_SOCK_RECV_TIMEOUT 10
 
 #if (defined _WIN32 && defined RF62X_LIBRARY)
     #define API_EXPORT __declspec(dllexport)
