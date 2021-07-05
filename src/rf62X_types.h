@@ -540,14 +540,16 @@ typedef struct
 {
     rfChar* data;
     rfUint32 data_size;
-    rfUint32 width;
-    rfUint32 height;
+    rfUint32 frame_width;
+    rfUint32 frame_height;
     rfUint8 pixel_size;
 
     rfBool user_roi_active;
     rfBool user_roi_enabled;
     rfUint32 user_roi_pos;
     rfUint32 user_roi_size;
+    rfUint32 fact_sensor_width;
+    rfUint32 fact_sensor_height;
 }rf627_smart_frame_t;
 
 typedef struct
@@ -614,6 +616,7 @@ typedef struct
     uint32_t user_streams_format;
 
     uint32_t fact_general_xemr;
+    uint32_t fact_network_maxPacketSize;
 
 }rf627_smart_hello_info_by_service_protocol;
 
