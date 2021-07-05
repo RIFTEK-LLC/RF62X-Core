@@ -1499,12 +1499,6 @@ rfBool convert_calibration_table_to_bytes(rf627_calib_table_t* table, char** byt
             mpack_write_cstr(&writer, "type");
             mpack_write_uint(&writer, table->rf627smart_calib_table->m_Type);
 
-            for (size_t i = 0; i < table->rf627smart_calib_table->m_DataSize; i++)
-                table->rf627smart_calib_table->m_Data[i] = i;
-
-            uint16_t crc = crc16(table->rf627smart_calib_table->m_Data, table->rf627smart_calib_table->m_DataSize);
-            table->rf627smart_calib_table->m_CRC16 = crc;
-
             mpack_write_cstr(&writer, "crc");
             mpack_write_uint(&writer, table->rf627smart_calib_table->m_CRC16);
 

@@ -5559,12 +5559,6 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
         mpack_write_cstr(&writer, "time_stamp");
         mpack_write_int(&writer, scanner->calib_table.m_TimeStamp);
 
-        for (size_t i = 0; i < scanner->calib_table.m_DataSize; i++)
-            scanner->calib_table.m_Data[i] = i;
-
-        uint16_t crc = crc16(scanner->calib_table.m_Data, scanner->calib_table.m_DataSize);
-        scanner->calib_table.m_CRC16 = crc;
-
         mpack_write_cstr(&writer, "crc");
         mpack_write_uint(&writer, scanner->calib_table.m_CRC16);
 
