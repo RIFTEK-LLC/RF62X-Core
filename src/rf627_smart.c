@@ -650,6 +650,7 @@ rf627_smart_profile2D_t* rf627_smart_get_profile2D(rf627_smart_t* scanner, rfBoo
             profile->header.zmr = header_from_msg.zmr;
             profile->header.xemr = header_from_msg.xemr;
             profile->header.discrete_value = header_from_msg.discrete_value;
+            profile->header.license_hash = header_from_msg.license_hash;
 
             profile->header.exposure_time = header_from_msg.exposure_time;
             profile->header.laser_value = header_from_msg.laser_value;

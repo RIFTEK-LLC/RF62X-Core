@@ -393,7 +393,8 @@ typedef struct
     rfUint16    zmr;
     rfUint16    xemr;
     rfUint16    discrete_value;
-    rfUint8     reserved_0[14];
+    rfUint8     reserved_0[10];
+    rfUint32    license_hash;
 
     rfUint32    exposure_time;
     rfUint32    laser_value;
