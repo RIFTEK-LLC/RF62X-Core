@@ -617,7 +617,7 @@ typedef struct
     uint32_t user_streams_format;
 
     uint32_t fact_general_xemr;
-    uint32_t fact_network_maxPacketSize;
+    uint32_t fact_maxPacketSize;
 
 }rf627_smart_hello_info_by_service_protocol;
 

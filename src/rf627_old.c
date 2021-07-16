@@ -5154,3 +5154,62 @@ rfUint8 rf627_old_command_periphery_send(
     memory_platform.rf_free(TX);
     return ret;
 }
+
+
+rfBool rf627_old_reboot_device_request_to_scanner(rf627_old_t* scanner)
+{
+    rfSize RX_SIZE = rf627_protocol_old_get_size_of_header() + RF627_MAX_PAYLOAD_SIZE;
+    rfUint8* RX = memory_platform.rf_calloc(1, RX_SIZE);
+    rfSize TX_SIZE = rf627_protocol_old_get_size_of_header() + RF627_MAX_PAYLOAD_SIZE;
+    rfUint8* TX =  memory_platform.rf_calloc(1, TX_SIZE);
+
+    rfUint32 dst_ip_addr;
+    rfUint16 dst_port;
+    rfBool ret = 1;
+
+    // create write_params msg request
+    rf627_old_header_msg_t reboot_device_msg =
+            rf627_protocol_old_create_reboot_msg_request(
+                kRF627_OLD_PROTOCOL_HEADER_CONFIRMATION_OFF,
+                scanner->factory_params.general.serial,
+                scanner->msg_count);
+
+    // pack hello msg request to packet
+    rfUint32 request_packet_size =
+            rf627_protocol_old_pack_reboot_msg_request_to_packet(
+                (rfUint8*)TX, TX_SIZE, &reboot_device_msg);
+
+    //send_addr.sin_family = RF_AF_INET;
+    dst_ip_addr = scanner->user_params.network.ip_address[0] << 24 |
+                  scanner->user_params.network.ip_address[1] << 16 |
+                  scanner->user_params.network.ip_address[2] << 8 |
+                  scanner->user_params.network.ip_address[3];
+    dst_port = scanner->user_params.network.service_port;
+
+
+    if (rf627_protocol_send_packet_by_udp(
+                scanner->m_svc_sock, TX, request_packet_size, dst_ip_addr, dst_port, 0, NULL))
+    {
+        scanner->msg_count++;
+
+        const rfInt data_len =
+                rf627_protocol_old_get_size_of_response_save_user_params_packet();
+        rfInt nret = network_platform.network_methods.recv_data(
+                    scanner->m_svc_sock, RX, data_len);
+        if (nret == data_len)
+        {
+            rfSize confirm_packet_size =
+                    rf627_protocol_old_create_confirm_packet_from_response_packet(
+                        TX, TX_SIZE, RX, RX_SIZE);
+            if(confirm_packet_size > 0)
+            {
+                rf627_protocol_send_packet_by_udp(
+                            scanner->m_svc_sock, TX, confirm_packet_size, dst_ip_addr, dst_port, 0, 0);
+            }
+        }
+    }
+
+    memory_platform.rf_free(RX);
+    memory_platform.rf_free(TX);
+    return ret;
+}

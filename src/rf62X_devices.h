@@ -178,6 +178,15 @@ rfUint8 rf627_old_command_periphery_send(
         rfUint16 input_size, void* input_data,
         rfUint16* output_size, void** output_data);
 
+/**
+ * @brief rf627_smart_reboot_device_request_to_scanner - command to restart device
+ *
+ * @param scanner - ptr to scanner
+ *
+ * @return true on success
+ */
+rfBool rf627_old_reboot_device_request_to_scanner(rf627_old_t* scanner);
+
 
 //
 // RF627

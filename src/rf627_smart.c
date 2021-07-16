@@ -220,13 +220,13 @@ rf627_smart_t* rf627_smart_create_from_hello_msg(char* data, rfUint32 data_size)
     }
 
     // The maxmim udp packet size.
-    if (mpack_node_map_contains_cstr(root, "fact_network_maxPacketSize"))
+    if (mpack_node_map_contains_cstr(root, "fact_serviceProtocol_maxPacketSize"))
     {
-        rf627_smart->info_by_service_protocol.fact_network_maxPacketSize =
-                mpack_node_uint(mpack_node_map_cstr(root, "fact_network_maxPacketSize"));
+        rf627_smart->info_by_service_protocol.fact_maxPacketSize =
+                mpack_node_uint(mpack_node_map_cstr(root, "fact_serviceProtocol_maxPacketSize"));
     }else
     {
-        rf627_smart->info_by_service_protocol.fact_network_maxPacketSize = 65535;
+        rf627_smart->info_by_service_protocol.fact_maxPacketSize = 65535;
     }
 
     mpack_tree_destroy(&tree);
@@ -496,13 +496,13 @@ rfBool rf627_smart_update_from_hello_msg(char* data, rfUint32 data_size, rf627_s
     }
 
     // The maxmim udp packet size.
-    if (mpack_node_map_contains_cstr(root, "fact_network_maxPacketSize"))
+    if (mpack_node_map_contains_cstr(root, "fact_maxPacketSize"))
     {
-        rf627_smart->info_by_service_protocol.fact_network_maxPacketSize =
-                mpack_node_uint(mpack_node_map_cstr(root, "fact_network_maxPacketSize"));
+        rf627_smart->info_by_service_protocol.fact_maxPacketSize =
+                mpack_node_uint(mpack_node_map_cstr(root, "fact_maxPacketSize"));
     }else
     {
-        rf627_smart->info_by_service_protocol.fact_network_maxPacketSize = 65535;
+        rf627_smart->info_by_service_protocol.fact_maxPacketSize = 65535;
     }
 
     mpack_tree_destroy(&tree);
@@ -539,7 +539,7 @@ rfBool rf627_smart_connect(rf627_smart_t* scanner)
     uint32_t host_device_uid = 777;
     uint32_t host_udp_port = 0;
     uint32_t socket_timeout = 100;
-    uint32_t max_packet_size = scanner->info_by_service_protocol.fact_network_maxPacketSize + 130;
+    uint32_t max_packet_size = scanner->info_by_service_protocol.fact_maxPacketSize;
     uint32_t max_data_size = 20000000;
 
     char* config = generate_config_string(
@@ -4229,7 +4229,7 @@ rf627_smart_frame_t* rf627_smart_get_frame(rf627_smart_t* scanner, rfUint32 time
     // data_type - this is the type of packaging of the sent data
     char* data_type                     = "blob";  // mpack, json, blob..
     uint8_t is_check_crc                = FALSE;   // check crc disabled
-    uint8_t is_confirmation             = TRUE;    // confirmation disabled
+    uint8_t is_confirmation             = FALSE;   // confirmation disabled
     uint8_t is_one_answ                 = TRUE;    // wait only one answer
     uint32_t waiting_time               = timeout; // ms
     uint32_t resends                    = is_confirmation ? 3 : 0;
