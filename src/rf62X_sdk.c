@@ -1731,8 +1731,7 @@ uint8_t send_reboot_device_request_to_scanner(scanner_base_t *device, protocol_t
     case kRF627_OLD:
         switch (protocol) {
         case kSERVICE:
-            rf627_old_reboot_device_request_to_scanner(device->rf627_old);
-            return FALSE;
+            return rf627_old_reboot_device_request_to_scanner(device->rf627_old);
             break;
         case kETHERNET_IP:
         case kMODBUS_TCP:
