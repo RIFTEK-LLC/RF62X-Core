@@ -178,10 +178,19 @@ rfUint8 rf627_old_command_periphery_send(
         rfUint16 input_size, void* input_data,
         rfUint16* output_size, void** output_data);
 
+/**
+ * @brief rf627_smart_reboot_device_request_to_scanner - command to restart device
+ *
+ * @param scanner - ptr to scanner
+ *
+ * @return true on success
+ */
+rfBool rf627_old_reboot_device_request_to_scanner(rf627_old_t* scanner);
+
 
 //
 // RF627
-// smart version (v2.x.x)
+// Smart version (v2.x.x)
 //
 
 typedef struct
@@ -189,12 +198,11 @@ typedef struct
     RF62X_channel_t channel;
     void* m_data_sock;
 
-
     vector_t *params_list;
 
     rf627_smart_hello_info_by_service_protocol info_by_service_protocol;
     rf627_smart_calib_table_t calib_table;
-
+    rfBool is_connected;
 }rf627_smart_t;
 
 /**
@@ -481,6 +489,24 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(
  */
 rfBool rf627_smart_save_calibration_data_by_service_protocol(
         rf627_smart_t* scanner, rfUint32 timeout);
+
+
+/**
+ * @brief rf627_smart_send_to_periphery_by_service_protocol - Send data
+ * to periphery
+ *
+ * @param scanner Ptr to scanner
+ * @param device_name Interface where the data will be sent. e.x. "usart0"
+ * @param data Data to be sent
+ * @param data_size Size of data
+ * @param answ Answer to sent data
+ * @param answ_size Answer data size
+ * @param timeout to send and receive answer
+ * @return true on success
+ */
+rfBool rf627_smart_send_to_periphery_by_service_protocol(
+        rf627_smart_t* scanner, rfChar* device_name, rfChar* data,
+        rfUint32 data_size, char** answ, rfUint32* answ_size,  rfUint32 timeout);
 
 
 /**

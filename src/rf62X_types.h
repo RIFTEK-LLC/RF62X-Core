@@ -393,7 +393,8 @@ typedef struct
     rfUint16    zmr;
     rfUint16    xemr;
     rfUint16    discrete_value;
-    rfUint8     reserved_0[14];
+    rfUint8     reserved_0[10];
+    rfUint32    license_hash;
 
     rfUint32    exposure_time;
     rfUint32    laser_value;
@@ -540,14 +541,16 @@ typedef struct
 {
     rfChar* data;
     rfUint32 data_size;
-    rfUint32 width;
-    rfUint32 height;
+    rfUint32 frame_width;
+    rfUint32 frame_height;
     rfUint8 pixel_size;
 
     rfBool user_roi_active;
     rfBool user_roi_enabled;
     rfUint32 user_roi_pos;
     rfUint32 user_roi_size;
+    rfUint32 fact_sensor_width;
+    rfUint32 fact_sensor_height;
 }rf627_smart_frame_t;
 
 typedef struct
@@ -614,6 +617,7 @@ typedef struct
     uint32_t user_streams_format;
 
     uint32_t fact_general_xemr;
+    uint32_t fact_maxPacketSize;
 
 }rf627_smart_hello_info_by_service_protocol;
 
