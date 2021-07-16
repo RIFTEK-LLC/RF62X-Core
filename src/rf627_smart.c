@@ -496,10 +496,10 @@ rfBool rf627_smart_update_from_hello_msg(char* data, rfUint32 data_size, rf627_s
     }
 
     // The maxmim udp packet size.
-    if (mpack_node_map_contains_cstr(root, "fact_maxPacketSize"))
+    if (mpack_node_map_contains_cstr(root, "fact_serviceProtocol_maxPacketSize"))
     {
         rf627_smart->info_by_service_protocol.fact_maxPacketSize =
-                mpack_node_uint(mpack_node_map_cstr(root, "fact_maxPacketSize"));
+                mpack_node_uint(mpack_node_map_cstr(root, "fact_serviceProtocol_maxPacketSize"));
     }else
     {
         rf627_smart->info_by_service_protocol.fact_maxPacketSize = 65535;
