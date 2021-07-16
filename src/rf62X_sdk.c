@@ -1027,6 +1027,21 @@ rfUint8 send_command2(
                         command->input.size, command->input.payload,
                         &command->output.size, (void**)&command->output.payload);
         }
+        if(rf_strcmp("CID_PROFILE_SET_COUNTERS", command->name) == 0)
+        {
+            rfUint32 profile_counter = 0;
+            rfUint32 packet_counter = 0;
+            if (command->input.size == 4)
+            {
+                memcpy(&profile_counter, &command->input.payload[0], 4);
+            }
+            else if (command->input.size == 8)
+            {
+                memcpy(&profile_counter, &command->input.payload[0], 4);
+                memcpy(&packet_counter, &command->input.payload[4], 4);
+            }
+            return rf627_old_command_set_counters(device->rf627_old, profile_counter, packet_counter);
+        }
         break;
     }
     case kRF627_SMART:
