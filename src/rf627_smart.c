@@ -5318,7 +5318,7 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
                 scanner->calib_table.m_Data = NULL;
                 scanner->calib_table.m_DataSize = 0;
 
-                scanner->calib_table.m_Type = 0x04;
+                scanner->calib_table.m_Type = 0x05;
 
                 scanner->calib_table.m_Serial = answ->serial;
                 scanner->calib_table.m_DataRowLength = answ->data_row_len;
@@ -5360,7 +5360,7 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
         scanner->calib_table.m_Data = NULL;
         scanner->calib_table.m_DataSize = 0;
 
-        scanner->calib_table.m_Type = 0x04;
+        scanner->calib_table.m_Type = 0x05;
 
         scanner->calib_table.m_Serial = scanner->info_by_service_protocol.fact_general_serial;
         scanner->calib_table.m_DataRowLength = 8192;
