@@ -1027,6 +1027,21 @@ rfUint8 send_command2(
                         command->input.size, command->input.payload,
                         &command->output.size, (void**)&command->output.payload);
         }
+        if(rf_strcmp("CID_PROFILE_SET_COUNTERS", command->name) == 0)
+        {
+            rfUint32 profile_counter = 0;
+            rfUint32 packet_counter = 0;
+            if (command->input.size == 4)
+            {
+                memcpy(&profile_counter, &command->input.payload[0], 4);
+            }
+            else if (command->input.size == 8)
+            {
+                memcpy(&profile_counter, &command->input.payload[0], 4);
+                memcpy(&packet_counter, &command->input.payload[4], 4);
+            }
+            return rf627_old_command_set_counters(device->rf627_old, profile_counter, packet_counter);
+        }
         break;
     }
     case kRF627_SMART:
@@ -1103,7 +1118,9 @@ rfUint8 check_connection_to_scanner(scanner_base_t *device, uint32_t timeout, pr
         switch (protocol) {
         case kSERVICE:
         {
-            return FALSE;
+            rfBool result = FALSE;
+            result = rf627_old_check_connection_by_service_protocol(device->rf627_old, timeout);
+            return result;
         }
         case kETHERNET_IP:
         case kMODBUS_TCP:
@@ -1716,8 +1733,7 @@ uint8_t send_reboot_device_request_to_scanner(scanner_base_t *device, protocol_t
     case kRF627_OLD:
         switch (protocol) {
         case kSERVICE:
-            rf627_old_reboot_device_request_to_scanner(device->rf627_old);
-            return FALSE;
+            return rf627_old_reboot_device_request_to_scanner(device->rf627_old);
             break;
         case kETHERNET_IP:
         case kMODBUS_TCP:

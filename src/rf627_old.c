@@ -587,6 +587,75 @@ void rf627_old_disconnect(rf627_old_t* scanner)
     }
 }
 
+rfBool rf627_old_check_connection_by_service_protocol(
+        rf627_old_t* scanner, rfUint32 timeout)
+{
+
+    rfSize RX_SIZE = rf627_protocol_old_get_size_of_header() + RF627_MAX_PAYLOAD_SIZE;
+    rfUint8* RX = memory_platform.rf_calloc(1, RX_SIZE);
+    rfSize TX_SIZE = rf627_protocol_old_get_size_of_header() + RF627_MAX_PAYLOAD_SIZE;
+    rfUint8* TX =  memory_platform.rf_calloc(1, TX_SIZE);
+
+
+    rfUint32 dst_ip_addr;
+    rfUint16 dst_port;
+    rfBool ret = FALSE;
+
+    // create hello msg request
+    rf627_old_header_msg_t hello_msg =
+            rf627_protocol_old_create_hello_msg_request();
+
+    // pack hello msg request to packet
+    rfUint32 request_packet_size =
+            rf627_protocol_old_pack_hello_msg_request_to_packet(
+                (rfUint8*)TX, TX_SIZE, &hello_msg);
+
+    dst_ip_addr = scanner->user_params.network.ip_address[0] << 24 |
+                                                                scanner->user_params.network.ip_address[1] << 16 |
+                                                                                                              scanner->user_params.network.ip_address[2] << 8 |
+                                                                                                                                                            scanner->user_params.network.ip_address[3];
+    dst_port = scanner->user_params.network.service_port;
+
+    if (rf627_protocol_send_packet_by_udp(
+                scanner->m_svc_sock, TX, request_packet_size, dst_ip_addr, dst_port, 0, NULL))
+    {
+        usleep(timeout*1000);
+        rfUint32 response_packet_size =
+                rf627_protocol_old_get_size_of_response_hello_packet();
+
+        rfInt nret = network_platform.network_methods.recv_data(
+                    scanner->m_svc_sock, RX, response_packet_size);
+
+        if (nret == (rfInt)response_packet_size)
+        {
+            rfSize confirm_packet_size =
+                    rf627_protocol_old_create_confirm_packet_from_response_packet(
+                        TX, TX_SIZE, RX, RX_SIZE);
+            if(confirm_packet_size > 0)
+            {
+                rf627_protocol_send_packet_by_udp(
+                            scanner->m_svc_sock, TX, confirm_packet_size, dst_ip_addr, dst_port, 0, 0);
+            }
+
+            rf627_old_header_msg_t response_header_msg =
+                    rf627_protocol_old_unpack_header_msg_from_hello_packet(RX);
+
+            if(response_header_msg.serial_number == scanner->factory_params.general.serial)
+            {
+                ret = TRUE;
+            }
+        }
+    }
+
+    //    _mx[0].unlock();
+
+    memory_platform.rf_free(RX);
+    memory_platform.rf_free(TX);
+
+    return ret;
+
+}
+
 void rf627_old_free(rf627_old_t* scanner)
 {
     network_platform.network_methods.close_socket(scanner->m_data_sock);
@@ -3599,7 +3668,7 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
 
     rfUint32 dst_ip_addr;
     rfUint16 dst_port;
-    rfBool ret = 1;
+    rfBool ret = FALSE;
 
     //std::cout << __LINE__ << " _mx[0].lock();" << std::endl << std::flush;
     //_mx[0].lock();
@@ -4389,7 +4458,7 @@ rfBool rf627_old_read_factory_params_from_scanner(rf627_old_t* scanner)
                 vector_add(scanner->params_list, p);
 
 
-                ret = 1;
+                ret = TRUE;
             }
 
 

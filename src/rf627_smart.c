@@ -875,7 +875,7 @@ rfInt8 rf627_smart_get_hello_callback(
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -894,7 +894,7 @@ rfInt8 rf627_smart_get_hello_callback(
                 if (!rf627_smart_update_from_hello_msg(data, data_size, scanner->rf627_smart, &update_network))
                 {
                     status = FALSE;
-                    TRACE(TRACE_LEVEL_ERROR,
+                    TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
                           "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
                           msg->cmd_name, msg->_uid, data_size);
                     return status;
@@ -915,7 +915,7 @@ rfInt8 rf627_smart_get_hello_callback(
     // to the search_result list
     if (!existing)
     {
-        TRACE(TRACE_LEVEL_DEBUG, "Found scanner %d\n", device_id);
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "Found scanner %d\n", device_id);
 
         scanner_base_t* rf627 =
                 memory_platform.rf_calloc(1, sizeof(scanner_base_t));
@@ -924,7 +924,7 @@ rfInt8 rf627_smart_get_hello_callback(
         rf627->rf627_smart = rf627_smart_create_from_hello_msg(data, data_size);
         if (rf627->rf627_smart == NULL)
         {
-            TRACE(TRACE_LEVEL_ERROR,
+            TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
                   "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
                   msg->cmd_name, msg->_uid, data_size);
             free(rf627);
@@ -964,7 +964,7 @@ rfInt8 rf627_smart_get_hello_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -974,7 +974,7 @@ rfInt8 rf627_smart_get_hello_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -1075,7 +1075,7 @@ rfUint8 rf627_smart_search_by_service_protocol(vector_t *scanner_list, rfUint32 
         // Send request msg
         if (RF62X_channel_send_msg(&channel, msg))
         {
-            TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+            TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
             // try to find answer to rqst
             pthread_mutex_lock(msg->result_mutex);
@@ -1097,7 +1097,7 @@ rfUint8 rf627_smart_search_by_service_protocol(vector_t *scanner_list, rfUint32 
         }
         else
         {
-            TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+            TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
         }
 
         // Cleanup msg
@@ -1105,7 +1105,7 @@ rfUint8 rf627_smart_search_by_service_protocol(vector_t *scanner_list, rfUint32 
         free(msg); msg = NULL;
     }else
     {
-        TRACE(TRACE_LEVEL_ERROR, "Smart channel not initialized: %s", config);
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "Smart channel not initialized: %s", config);
     }
 
     RF62X_channel_cleanup(&channel);
@@ -1125,7 +1125,7 @@ rfInt8 rf627_smart_send_profile2D_request_callback(
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -1137,7 +1137,7 @@ rfInt8 rf627_smart_send_profile2D_request_callback(
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -1189,7 +1189,7 @@ rfInt8 rf627_smart_send_profile2D_request_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -1199,7 +1199,7 @@ rfInt8 rf627_smart_send_profile2D_request_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -1280,7 +1280,7 @@ rfBool rf627_smart_send_profile2D_request_to_scanner(rf627_smart_t* scanner, rfU
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -1304,20 +1304,21 @@ rfBool rf627_smart_send_profile2D_request_to_scanner(rf627_smart_t* scanner, rfU
                 status = FALSE;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ",((answer*)result)->result);
 
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -1337,7 +1338,7 @@ rfInt8 rf627_smart_check_connection_callback(char* data, uint32_t data_size, uin
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -1353,7 +1354,7 @@ rfInt8 rf627_smart_check_connection_callback(char* data, uint32_t data_size, uin
                 if (!rf627_smart_update_from_hello_msg(data, data_size, scanner->rf627_smart, &update_network))
                 {
                     status = FALSE;
-                    TRACE(TRACE_LEVEL_ERROR,
+                    TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
                           "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
                           msg->cmd_name, msg->_uid, data_size);
                     return status;
@@ -1394,7 +1395,7 @@ rfInt8 rf627_smart_check_connection_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -1404,7 +1405,7 @@ rfInt8 rf627_smart_check_connection_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -1457,7 +1458,7 @@ rfBool rf627_smart_check_connection_by_service_protocol(rf627_smart_t* scanner, 
     // Send request msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -1477,13 +1478,13 @@ rfBool rf627_smart_check_connection_by_service_protocol(rf627_smart_t* scanner, 
         }
         else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     // Cleanup msg
@@ -1504,7 +1505,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -2976,7 +2977,7 @@ rfInt8 rf627_smart_read_params_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -2986,7 +2987,7 @@ rfInt8 rf627_smart_read_params_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -3039,7 +3040,7 @@ rfBool rf627_smart_read_params_from_scanner(rf627_smart_t* scanner, rfUint32 tim
     // Send test msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -3058,19 +3059,20 @@ rfBool rf627_smart_read_params_from_scanner(rf627_smart_t* scanner, rfUint32 tim
             status = ((answer*)result)->result;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ", status ? "RF_OK" : "PARSING_PROBLEM");
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     // Cleanup msg
@@ -3091,7 +3093,7 @@ rfInt8 rf627_smart_write_params_callback(char* data, uint32_t data_size, uint32_
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -3103,7 +3105,7 @@ rfInt8 rf627_smart_write_params_callback(char* data, uint32_t data_size, uint32_
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -3171,7 +3173,7 @@ rfInt8 rf627_smart_write_params_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -3181,7 +3183,7 @@ rfInt8 rf627_smart_write_params_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -3364,7 +3366,7 @@ rfBool rf627_smart_write_params_to_scanner(rf627_smart_t* scanner, rfUint32 time
         // Send test msg
         if (RF62X_channel_send_msg(&scanner->channel, msg))
         {
-            TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+            TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
             // try to find answer to rqst
             pthread_mutex_lock(msg->result_mutex);
@@ -3397,7 +3399,7 @@ rfBool rf627_smart_write_params_to_scanner(rf627_smart_t* scanner, rfUint32 time
                     if (rf_strcmp(((answer*)result)->params[i].result, "RF_OK") != 0)
                     {
                         status = FALSE;
-                        TRACE(TRACE_LEVEL_WARNING,
+                        TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,
                               "Parameter \"%s\" hasn't been set. "
                               "Reason for failure: %s\n",
                               ((answer*)result)->params[i].param_name,
@@ -3406,19 +3408,20 @@ rfBool rf627_smart_write_params_to_scanner(rf627_smart_t* scanner, rfUint32 time
                 }
 
                 int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-                TRACE(TRACE_LEVEL,
+                int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+                TRACE(TRACE_LEVEL, TRACE_FORMAT,
                       "%s%s PARAMETERS HAS BEEN SET\n",
                       "Get response to request! "
                       "Response status: ",status ? "ALL" : "NOT ALL");
             }else
             {
-                TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+                TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
             }
             pthread_mutex_unlock(msg->result_mutex);
         }
         else
         {
-            TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+            TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
         }
 
         RF62X_cleanup_msg(msg);
@@ -3440,7 +3443,7 @@ rfInt8 rf627_smart_save_params_callback(char* data, uint32_t data_size, uint32_t
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -3452,7 +3455,7 @@ rfInt8 rf627_smart_save_params_callback(char* data, uint32_t data_size, uint32_t
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -3503,7 +3506,7 @@ rfInt8 rf627_smart_save_params_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -3513,7 +3516,7 @@ rfInt8 rf627_smart_save_params_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -3568,7 +3571,7 @@ rfBool rf627_smart_save_params_to_scanner(rf627_smart_t* scanner, rfUint32 timeo
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -3592,20 +3595,21 @@ rfBool rf627_smart_save_params_to_scanner(rf627_smart_t* scanner, rfUint32 timeo
                 status = FALSE;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ",((answer*)result)->result);
 
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -3625,7 +3629,7 @@ rfInt8 rf627_smart_save_recovery_params_callback(char* data, uint32_t data_size,
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -3637,7 +3641,7 @@ rfInt8 rf627_smart_save_recovery_params_callback(char* data, uint32_t data_size,
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -3689,7 +3693,7 @@ rfInt8 rf627_smart_save_recovery_params_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -3699,7 +3703,7 @@ rfInt8 rf627_smart_save_recovery_params_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -3754,7 +3758,7 @@ rfBool rf627_smart_save_recovery_params_to_scanner(rf627_smart_t* scanner, rfUin
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -3778,20 +3782,21 @@ rfBool rf627_smart_save_recovery_params_to_scanner(rf627_smart_t* scanner, rfUin
                 status = FALSE;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ",((answer*)result)->result);
 
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -3811,7 +3816,7 @@ rfInt8 rf627_smart_load_recovery_params_callback(char* data, uint32_t data_size,
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -3823,7 +3828,7 @@ rfInt8 rf627_smart_load_recovery_params_callback(char* data, uint32_t data_size,
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -3875,7 +3880,7 @@ rfInt8 rf627_smart_load_recovery_params_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -3885,7 +3890,7 @@ rfInt8 rf627_smart_load_recovery_params_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -3940,7 +3945,7 @@ rfBool rf627_smart_load_recovery_params_from_scanner(rf627_smart_t* scanner, rfU
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -3964,20 +3969,21 @@ rfBool rf627_smart_load_recovery_params_from_scanner(rf627_smart_t* scanner, rfU
                 status = FALSE;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ",((answer*)result)->result);
 
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -3997,7 +4003,7 @@ rfInt8 rf627_smart_get_frame_callback(char* data, uint32_t data_size, uint32_t d
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -4009,7 +4015,7 @@ rfInt8 rf627_smart_get_frame_callback(char* data, uint32_t data_size, uint32_t d
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -4159,7 +4165,7 @@ rfInt8 rf627_smart_get_frame_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -4169,7 +4175,7 @@ rfInt8 rf627_smart_get_frame_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -4248,7 +4254,7 @@ rf627_smart_frame_t* rf627_smart_get_frame(rf627_smart_t* scanner, rfUint32 time
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -4285,26 +4291,26 @@ rf627_smart_frame_t* rf627_smart_get_frame(rf627_smart_t* scanner, rfUint32 time
                 frame->fact_sensor_width = answ->frame->fact_sensor_width;
 
 
-                TRACE(TRACE_LEVEL_DEBUG,
+                TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
                       "%s%s\n",
                       "Get response to request! "
                       "Response status: ", "RF_OK");
             }else
             {
-                TRACE(TRACE_LEVEL_WARNING,
+                TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,
                       "%s%s\n",
                       "Get response to request! "
                       "Response status: ",answ->result);
             }
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -4324,7 +4330,7 @@ rfInt8 rf627_smart_get_dumps_profiles_callback(char* data, uint32_t data_size, u
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -4336,7 +4342,7 @@ rfInt8 rf627_smart_get_dumps_profiles_callback(char* data, uint32_t data_size, u
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -4378,7 +4384,7 @@ rfInt8 rf627_smart_get_dumps_profiles_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -4388,7 +4394,7 @@ rfInt8 rf627_smart_get_dumps_profiles_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -4471,7 +4477,7 @@ rfBool rf627_smart_get_dumps_profiles_by_service_protocol(
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -4645,19 +4651,20 @@ rfBool rf627_smart_get_dumps_profiles_by_service_protocol(
                 status = FALSE;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%d\n",
                   "Get response to request! "
                   "Received profiles: ",*array_count);
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -4677,7 +4684,7 @@ rfInt8 rf627_smart_get_authorization_token_callback(char* data, uint32_t data_si
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -4689,7 +4696,7 @@ rfInt8 rf627_smart_get_authorization_token_callback(char* data, uint32_t data_si
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -4737,7 +4744,7 @@ rfInt8 rf627_smart_get_authorization_token_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -4747,7 +4754,7 @@ rfInt8 rf627_smart_get_authorization_token_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -4797,7 +4804,7 @@ rfBool rf627_smart_get_authorization_token_by_service_protocol(rf627_smart_t* sc
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -4824,20 +4831,20 @@ rfBool rf627_smart_get_authorization_token_by_service_protocol(rf627_smart_t* sc
             *token = calloc(*token_size + 1, sizeof (char));
             memcpy(*token, ((answer*)result)->token, *token_size);
 
-            TRACE(TRACE_LEVEL_DEBUG,
+            TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ", ((answer*)result)->status != 0 ?
                         "STATUS_FACTORY" : "AUTH_STATUS_USER");
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -4857,7 +4864,7 @@ rfInt8 rf627_smart_set_authorization_key_callback(char* data, uint32_t data_size
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -4869,7 +4876,7 @@ rfInt8 rf627_smart_set_authorization_key_callback(char* data, uint32_t data_size
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -4924,7 +4931,7 @@ rfInt8 rf627_smart_set_authorization_key_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -4934,7 +4941,7 @@ rfInt8 rf627_smart_set_authorization_key_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -5016,7 +5023,7 @@ rfBool rf627_smart_set_authorization_key_by_service_protocol(rf627_smart_t* scan
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -5042,20 +5049,21 @@ rfBool rf627_smart_set_authorization_key_by_service_protocol(rf627_smart_t* scan
                 status = FALSE;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ",((answer*)result)->result);
 
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -5075,7 +5083,7 @@ rfInt8 rf627_smart_read_calibration_data_callback(char* data, uint32_t data_size
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -5087,7 +5095,7 @@ rfInt8 rf627_smart_read_calibration_data_callback(char* data, uint32_t data_size
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -5194,7 +5202,7 @@ rfInt8 rf627_smart_read_calibration_data_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -5204,7 +5212,7 @@ rfInt8 rf627_smart_read_calibration_data_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -5274,7 +5282,7 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -5337,19 +5345,20 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
             }
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ",((answer*)result)->result);
 
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     if (status == FALSE)
@@ -5396,7 +5405,7 @@ rfInt8 rf627_smart_write_calibration_data_callback(char* data, uint32_t data_siz
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -5408,7 +5417,7 @@ rfInt8 rf627_smart_write_calibration_data_callback(char* data, uint32_t data_siz
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -5460,7 +5469,7 @@ rfInt8 rf627_smart_write_calibration_data_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -5470,7 +5479,7 @@ rfInt8 rf627_smart_write_calibration_data_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -5618,7 +5627,7 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -5642,20 +5651,21 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
                 status = FALSE;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ",((answer*)result)->result);
 
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -5675,7 +5685,7 @@ rfInt8 rf627_smart_save_calibration_data_callback(char* data, uint32_t data_size
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -5687,7 +5697,7 @@ rfInt8 rf627_smart_save_calibration_data_callback(char* data, uint32_t data_size
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -5739,7 +5749,7 @@ rfInt8 rf627_smart_save_calibration_data_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -5749,7 +5759,7 @@ rfInt8 rf627_smart_save_calibration_data_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -5804,7 +5814,7 @@ rfBool rf627_smart_save_calibration_data_by_service_protocol(rf627_smart_t* scan
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -5828,20 +5838,21 @@ rfBool rf627_smart_save_calibration_data_by_service_protocol(rf627_smart_t* scan
                 status = FALSE;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ",((answer*)result)->result);
 
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
@@ -5861,7 +5872,7 @@ rfInt8 rf627_smart_reboot_device_callback(char* data, uint32_t data_size, uint32
     int32_t status = FALSE;
     rfBool existing = FALSE;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
           msg->cmd_name, msg->_uid, data_size);
 
@@ -5873,7 +5884,7 @@ rfInt8 rf627_smart_reboot_device_callback(char* data, uint32_t data_size, uint32
     {
         status = FALSE;
         mpack_tree_destroy(&tree);
-        TRACE(TRACE_LEVEL_ERROR,
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
               "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
               msg->cmd_name, msg->_uid, data_size);
         return status;
@@ -5925,7 +5936,7 @@ rfInt8 rf627_smart_reboot_device_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -5935,7 +5946,7 @@ rfInt8 rf627_smart_reboot_device_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
-    TRACE(TRACE_LEVEL_DEBUG,
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
           "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
           msg->cmd_name, msg->_uid);
 
@@ -5990,7 +6001,7 @@ rfBool rf627_smart_reboot_device_request_to_scanner(rf627_smart_t* scanner)
     // Send msg
     if (RF62X_channel_send_msg(&scanner->channel, msg))
     {
-        TRACE(TRACE_LEVEL_DEBUG, "%s", "Request were sent.\n");
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
 
         // try to find answer to rqst
         pthread_mutex_lock(msg->result_mutex);
@@ -6014,20 +6025,21 @@ rfBool rf627_smart_reboot_device_request_to_scanner(rf627_smart_t* scanner)
                 status = FALSE;
 
             int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
-            TRACE(TRACE_LEVEL,
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
                   "%s%s\n",
                   "Get response to request! "
                   "Response status: ",((answer*)result)->result);
 
         }else
         {
-            TRACE(TRACE_LEVEL_WARNING, "%s", "No response to request!\n");
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
         }
         pthread_mutex_unlock(msg->result_mutex);
     }
     else
     {
-        TRACE(TRACE_LEVEL_ERROR, "%s", "No data has been sent.\n");
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
     }
 
     RF62X_cleanup_msg(msg);
