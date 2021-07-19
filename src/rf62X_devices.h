@@ -72,6 +72,18 @@ rfBool rf627_old_connect(rf627_old_t* scanner);
 void rf627_old_disconnect(rf627_old_t* scanner);
 
 /**
+ * @brief rf627_old_check_connection_by_service_protocol - check scanner
+ * connection by service protocol
+ *
+ * @param scanner - ptr to device
+ * @param timeout to check
+ *
+ * @return true if scanner connected
+ */
+rfBool rf627_old_check_connection_by_service_protocol(
+        rf627_old_t* scanner, rfUint32 timeout);
+
+/**
  * @brief rf627_old_free - free memory allocated for rf627-smart scanner type
  *
  * @param rf627_old_t - prt to scanner struct

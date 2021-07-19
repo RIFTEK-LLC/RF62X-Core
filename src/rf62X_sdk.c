@@ -1118,7 +1118,9 @@ rfUint8 check_connection_to_scanner(scanner_base_t *device, uint32_t timeout, pr
         switch (protocol) {
         case kSERVICE:
         {
-            return FALSE;
+            rfBool result = FALSE;
+            result = rf627_old_check_connection_by_service_protocol(device->rf627_old, timeout);
+            return result;
         }
         case kETHERNET_IP:
         case kMODBUS_TCP:
