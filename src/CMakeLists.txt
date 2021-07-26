@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.13)
 ## LIBRARY-PROJECT
 ## name and version
 ###############################################################################
-project(RF62X-Core VERSION 2.15.1 LANGUAGES C)
+project(RF62X-Core VERSION 2.16.0 LANGUAGES C)
 
 
 
@@ -23,6 +23,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BINARY_DIR "${CMAKE_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BINARY_DIR}/lib")
+file (GLOB_RECURSE IN_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.h.in)
+configure_file(${IN_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/rf62X_core_version.h)
 
 
 

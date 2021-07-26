@@ -1765,6 +1765,44 @@ uint8_t send_reboot_device_request_to_scanner(scanner_base_t *device, protocol_t
     return 0;
 }
 
+uint8_t send_reboot_sensor_request_to_scanner(scanner_base_t *device, protocol_types_t protocol)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        switch (protocol) {
+        case kSERVICE:
+            return FALSE;
+            break;
+        case kETHERNET_IP:
+        case kMODBUS_TCP:
+            return FALSE; // RF627-old doesn't support this protocol
+            break;
+        default:
+            return FALSE; // Unknown protocol type
+            break;
+        }
+        break;
+    case kRF627_SMART:
+        switch (protocol) {
+        case kSERVICE:
+            return rf627_smart_reboot_sensor_request_to_scanner(device->rf627_smart);
+            break;
+        case kETHERNET_IP:
+            break;
+        case kMODBUS_TCP:
+            break;
+        default:
+            return 1; // Unknown protocol type
+            break;
+        }
+        break;
+    default:
+        return 2; // Unknown device type
+        break;
+    }
+    return 0;
+}
+
 rfUint8 load_recovery_params_from_scanner(scanner_base_t *device, uint32_t timeout, protocol_types_t protocol)
 {
     switch (device->type) {
@@ -1803,3 +1841,5 @@ rfUint8 load_recovery_params_from_scanner(scanner_base_t *device, uint32_t timeo
     }
     return 0;
 }
+
+

@@ -316,6 +316,15 @@ rfBool rf627_smart_send_profile2D_request_to_scanner(
  */
 rfBool rf627_smart_reboot_device_request_to_scanner(rf627_smart_t* scanner);
 
+/**
+ * @brief rf627_smart_reboot_sensor_request_to_scanner - command to restart CMOS-sensor
+ *
+ * @param scanner - ptr to scanner
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_reboot_sensor_request_to_scanner(rf627_smart_t* scanner);
+
 
 /**
  * @brief rf627_smart_read_params_from_scanner - Read parameters from device to

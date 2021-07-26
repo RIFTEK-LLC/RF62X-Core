@@ -6048,6 +6048,195 @@ rfBool rf627_smart_reboot_device_request_to_scanner(rf627_smart_t* scanner)
 }
 
 
+
+//
+// RF627-Smart (v2.x.x)
+// Reboot Method
+//
+rfInt8 rf627_smart_reboot_sensor_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+{
+    answ_count++;
+    RF62X_msg_t* msg = rqst_msg;
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+          msg->cmd_name, msg->_uid, data_size);
+
+    // Get response
+    mpack_tree_t tree;
+    mpack_tree_init_data(&tree, (const char*)data, data_size);
+    mpack_tree_parse(&tree);
+    if (mpack_tree_error(&tree) != mpack_ok)
+    {
+        status = FALSE;
+        mpack_tree_destroy(&tree);
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
+              "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+              msg->cmd_name, msg->_uid, data_size);
+        return status;
+    }
+
+    rfSize scanner_list_size = vector_count(search_history);
+    for (rfUint32 i = 0; i < scanner_list_size; i++)
+    {
+        scanner_base_t* scanner = (scanner_base_t*)vector_get(search_history, i);
+        if(scanner->type == kRF627_SMART)
+            if (scanner->rf627_smart->info_by_service_protocol.
+                    fact_general_serial == device_id)
+                existing = TRUE;
+    }
+
+    // If scanner exist
+    if (existing)
+    {
+        // Answer:
+        // {
+        //    result: String (*)
+        // }
+        // * result: displays the result according to the response codes.
+        //           On successful execution "RF_OK".
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        mpack_node_t root = mpack_tree_root(&tree);
+        mpack_node_t result_data = mpack_node_map_cstr(root, "result");
+        uint32_t result_size = mpack_node_strlen(result_data) + 1;
+
+        if (msg->result == NULL)
+        {
+            msg->result = calloc(1, sizeof (answer));
+        }
+
+        ((answer*)msg->result)->result =
+                mpack_node_cstr_alloc(result_data, result_size);
+
+        status = TRUE;
+    }
+
+    mpack_tree_destroy(&tree);
+    return status;
+}
+rfInt8 rf627_smart_reboot_sensor_timeout_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    return TRUE;
+}
+rfInt8 rf627_smart_reboot_sensor_free_result_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    pthread_mutex_lock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+    if (msg->result != NULL)
+    {
+        // Answer:
+        // {
+        //    result: String (*)
+        // }
+        // * result: displays the result according to the response codes.
+        //           On successful execution "RF_OK".
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        free(((answer*)msg->result)->result);
+        free(msg->result);
+        msg->result = NULL;
+    }
+    pthread_mutex_unlock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+
+    return TRUE;
+}
+rfBool rf627_smart_reboot_sensor_request_to_scanner(rf627_smart_t* scanner)
+{
+    // cmd_name - this is logical port/path where data will be send
+    char* cmd_name                      = "REINIT_SENSOR";
+    // payload - this is the data to be sent and their size
+    char* payload                       = NULL;
+    uint32_t payload_size               = 0;
+    // data_type - this is the type of packaging of the sent data
+    char* data_type                     = "blob";  // mpack, json, blob..
+    uint8_t is_check_crc                = FALSE;   // check crc disabled
+    uint8_t is_confirmation             = FALSE;   // confirmation disabled
+    uint8_t is_one_answ                 = TRUE;    // wait only one answer
+    uint32_t waiting_time               = 1000;    // ms
+    uint32_t resends                    = is_confirmation ? 3 : 0;
+    // callbacks for request
+    RF62X_answ_callback answ_clb        = rf627_smart_reboot_sensor_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_reboot_sensor_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_reboot_sensor_free_result_callback;
+
+    // Create request message
+    RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
+                                             is_check_crc, is_confirmation, is_one_answ,
+                                             waiting_time, resends,
+                                             answ_clb, timeout_clb, free_clb);
+
+    rfBool status = FALSE;
+    // Send msg
+    if (RF62X_channel_send_msg(&scanner->channel, msg))
+    {
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
+
+        // try to find answer to rqst
+        pthread_mutex_lock(msg->result_mutex);
+        void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+        if (result != NULL)
+        {
+            // Answer:
+            // {
+            //    result: String (*)
+            // }
+            // * result: displays the result according to the response codes.
+            //           On successful execution "RF_OK".
+            typedef struct
+            {
+                char* result;
+            }answer;
+
+            if (rf_strcmp(((answer*)result)->result, "RF_OK") == 0)
+                status = TRUE;
+            else
+                status = FALSE;
+
+            int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
+                  "%s%s\n",
+                  "Get response to request! "
+                  "Response status: ",((answer*)result)->result);
+
+        }else
+        {
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
+        }
+        pthread_mutex_unlock(msg->result_mutex);
+    }
+    else
+    {
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
+    }
+
+    RF62X_cleanup_msg(msg);
+    free(msg); msg = NULL;
+    return status;
+}
+
+
+
 rfBool rf627_smart_send_to_periphery_by_service_protocol(
         rf627_smart_t* scanner, rfChar* device_name, rfChar* data,
         rfUint32 data_size, char** answ, rfUint32* answ_size,  rfUint32 timeout)
