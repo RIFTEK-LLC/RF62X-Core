@@ -526,7 +526,7 @@ rfBool rf627_smart_save_calibration_data_by_service_protocol(
  * @return true on success
  */
 rfBool rf627_smart_send_to_periphery_by_service_protocol(
-        rf627_smart_t* scanner, rfChar* device_name, rfChar* data,
+        rf627_smart_t* scanner, const rfChar* device_name, rfChar* data,
         rfUint32 data_size, char** answ, rfUint32* answ_size,  rfUint32 timeout);
 
 

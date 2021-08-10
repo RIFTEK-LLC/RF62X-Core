@@ -377,6 +377,16 @@ API_EXPORT uint8_t send_reboot_device_request_to_scanner(
 API_EXPORT uint8_t send_reboot_sensor_request_to_scanner(
         scanner_base_t *device, protocol_types_t protocol);
 
+/**
+ * @brief send_reboot_sensor_request_to_scanner - The CMOS-sensor will restart
+ * @param[in] device Ptr to scanner
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT uint8_t send_data_to_scanner_periphery(
+        scanner_base_t *device, const rfChar* iface_name, rfUint32 timeout,
+        rfChar* in, rfUint32 in_size, rfChar** out, rfUint32* out_size);
+
 /** TODO
  * @brief set_parameter - Search parameters by his name
  * @param device - ptr to scanner

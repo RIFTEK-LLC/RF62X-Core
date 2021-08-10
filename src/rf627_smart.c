@@ -6236,12 +6236,325 @@ rfBool rf627_smart_reboot_sensor_request_to_scanner(rf627_smart_t* scanner)
 }
 
 
-
-rfBool rf627_smart_send_to_periphery_by_service_protocol(
-        rf627_smart_t* scanner, rfChar* device_name, rfChar* data,
-        rfUint32 data_size, char** answ, rfUint32* answ_size,  rfUint32 timeout)
+//
+// RF627-Smart (v2.x.x)
+// Send To !Periphery Method
+//
+rfInt8 rf627_smart_send_to_periphery_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
 {
+    answ_count++;
+    RF62X_msg_t* msg = rqst_msg;
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
 
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+          msg->cmd_name, msg->_uid, data_size);
+
+    // Get response
+    mpack_tree_t tree;
+    mpack_tree_init_data(&tree, (const char*)data, data_size);
+    mpack_tree_parse(&tree);
+    if (mpack_tree_error(&tree) != mpack_ok)
+    {
+        status = FALSE;
+        mpack_tree_destroy(&tree);
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
+              "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+              msg->cmd_name, msg->_uid, data_size);
+        return status;
+    }
+
+    rfSize scanner_list_size = vector_count(search_history);
+    for (rfUint32 i = 0; i < scanner_list_size; i++)
+    {
+        scanner_base_t* scanner = (scanner_base_t*)vector_get(search_history, i);
+        if(scanner->type == kRF627_SMART)
+            if (scanner->rf627_smart->info_by_service_protocol.
+                    fact_general_serial == device_id)
+                existing = TRUE;
+    }
+
+    // If scanner exist
+    if (existing)
+    {
+        // Answer:
+        // {
+        //    result: String,
+        //    answer:
+        //    {
+        //          result: String,
+        //          payload: Blob,
+        //    }
+        // }
+        // * Blob: The set of bytes that were received. If the data was not
+        //         accepted, the field is missing..
+        typedef struct
+        {
+            char* result;
+            rfBool status;
+            struct
+            {
+                char* result;
+                rfBool status;
+
+                char* payload;
+                uint32_t payload_size;
+            }out;
+        }answer;
+
+        if (msg->result == NULL)
+        {
+            msg->result = calloc(1, sizeof (answer));
+        }
+
+        ((answer*)msg->result)->status = FALSE;
+        mpack_node_t root = mpack_tree_root(&tree);
+        if (mpack_node_map_contains_cstr(root, "result"))
+        {
+            mpack_node_t result_data = mpack_node_map_cstr(root, "result");
+            uint32_t result_size = mpack_node_strlen(result_data) + 1;
+
+            ((answer*)msg->result)->result =
+                    mpack_node_cstr_alloc(result_data, result_size);
+
+            ((answer*)msg->result)->status = TRUE;
+        }
+
+        if (mpack_node_map_contains_cstr(root, "answer"))
+        {
+            ((answer*)msg->result)->out.status = FALSE;
+
+            mpack_node_t answer_node = mpack_node_map_cstr(root, "answer");
+            if (mpack_node_map_contains_cstr(answer_node, "result"))
+            {
+                mpack_node_t result_data = mpack_node_map_cstr(answer_node, "result");
+                uint32_t result_size = mpack_node_strlen(result_data) + 1;
+
+                ((answer*)msg->result)->out.result =
+                        mpack_node_cstr_alloc(result_data, result_size);
+
+                ((answer*)msg->result)->out.status = TRUE;
+            }
+
+            if (mpack_node_map_contains_cstr(answer_node, "payload"))
+            {
+                mpack_node_t payload_data = mpack_node_map_cstr(answer_node, "payload");
+                uint32_t payload_size = mpack_node_data_len(payload_data);
+
+                ((answer*)msg->result)->out.payload_size = payload_size;
+                if (payload_size > 0)
+                    ((answer*)msg->result)->out.payload = (char*)mpack_node_data_alloc(payload_data, payload_size+1);
+            }
+        }
+
+        status = TRUE;
+    }
+
+    mpack_tree_destroy(&tree);
+    return status;
+}
+rfInt8 rf627_smart_send_to_periphery_timeout_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    return TRUE;
+}
+rfInt8 rf627_smart_send_to_periphery_free_result_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    pthread_mutex_lock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+    if (msg->result != NULL)
+    {
+        // Answer:
+        // {
+        //    result: String,
+        //    answer:
+        //    {
+        //          result: String,
+        //          payload: Blob,
+        //    }
+        // }
+        // * Blob: The set of bytes that were received. If the data was not
+        //         accepted, the field is missing..
+        typedef struct
+        {
+            char* result;
+            rfBool status;
+            struct
+            {
+                char* result;
+                rfBool status;
+
+                char* payload;
+                uint32_t payload_size;
+            }out;
+        }answer;
+
+        answer* answ = msg->result;
+
+
+        if (answ->status)
+        {
+            if (answ->out.status)
+            {
+                if (answ->out.payload_size > 0)
+                    free(answ->out.payload);
+
+                free(answ->out.result);
+            }
+            free(answ->result);
+        }
+
+        free(msg->result);
+        msg->result = NULL;
+    }
+    pthread_mutex_unlock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+
+    return TRUE;
+}
+rfBool rf627_smart_send_to_periphery_by_service_protocol(
+        rf627_smart_t* scanner, const rfChar* device_name, rfChar* in,
+        rfUint32 in_size, char** out, rfUint32* out_size,  rfUint32 timeout)
+{
+    // Create payload
+    mpack_writer_t writer;
+    rfChar* data = NULL; //< A growing array for msg.
+    rfSize data_size = 0; //< Number of msg bytes.
+    mpack_writer_init_growable(&writer, &data, &data_size);
+
+
+    // Payload:
+    // {
+    //    interface: String
+    //    payload: blob,
+    //    answer_timeout: number (uint32_t)
+    // }
+    mpack_start_map(&writer, 3);
+    {
+        mpack_write_cstr(&writer, "interface");
+        mpack_write_cstr(&writer, device_name);
+
+        mpack_write_cstr(&writer, "payload");
+        mpack_write_bin(&writer, in, in_size);
+
+        mpack_write_cstr(&writer, "answer_timeout");
+        mpack_write_uint(&writer, timeout*1000);
+    }mpack_finish_map(&writer);
+
+    // finish writing
+    if (mpack_writer_destroy(&writer) != mpack_ok) {
+        fprintf(stderr, "An error occurred encoding the data!\n");
+        return FALSE;
+    }
+
+    // cmd_name - this is logical port/path where data will be send
+    char* cmd_name                      = "SEND_TO_PERIPHERY";
+    // payload - this is the data to be sent and their size
+    char* payload                       = data;
+    uint32_t payload_size               = (uint32_t)data_size;
+    // data_type - this is the type of packaging of the sent data
+    char* data_type                     = "mpack"; // mpack, json, blob..
+    uint8_t is_check_crc                = FALSE;   // check crc disabled
+    uint8_t is_confirmation             = FALSE;   // confirmation disabled
+    uint8_t is_one_answ                 = TRUE;    // wait only one answer
+    uint32_t waiting_time               = timeout + 300; // ms
+    uint32_t resends                    = is_confirmation ? 3 : 0;
+    // callbacks for request
+    RF62X_answ_callback answ_clb        = rf627_smart_send_to_periphery_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_send_to_periphery_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_send_to_periphery_free_result_callback;
+
+    // Create request message
+    RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
+                                             is_check_crc, is_confirmation, is_one_answ,
+                                             waiting_time, resends,
+                                             answ_clb, timeout_clb, free_clb);
+    // free memory of payload
+    free(payload);
+
+    rfBool status = FALSE;
+    // Send msg
+    if (RF62X_channel_send_msg(&scanner->channel, msg))
+    {
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
+
+        // try to find answer to rqst
+        pthread_mutex_lock(msg->result_mutex);
+        void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+        if (result != NULL)
+        {
+            typedef struct
+            {
+                char* result;
+                struct
+                {
+                    char* result;
+
+                    char* payload;
+                    uint32_t payload_size;
+                }out;
+            }answer;
+
+            answer* answ = result;
+
+            if (rf_strcmp(answ->result, "RF_OK") == 0)
+            {
+                status = TRUE;
+                TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+                      "%s%s\n",
+                      "Get response to request! "
+                      "Response status: ",((answer*)result)->result);
+
+                if(rf_strcmp(answ->out.result, "RF_OK") == 0)
+                {
+                    (*out) = calloc(1, answ->out.payload_size);
+                    *out_size = answ->out.payload_size;
+                    memcpy((*out), answ->out.payload, answ->out.payload_size);
+                }
+                else
+                {
+                    if (timeout > 0)
+                    {
+                        status = FALSE;
+                        TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,
+                              "%s%s\n",
+                              "Get response to request! "
+                              "Response status: ",((answer*)result)->out.result);
+                    }
+                }
+            }
+            else
+            {
+                status = FALSE;
+                TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,
+                      "%s%s\n",
+                      "Get response to request! "
+                      "Response status: ",((answer*)result)->result);
+            }
+        }else
+        {
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
+        }
+        pthread_mutex_unlock(msg->result_mutex);
+    }
+    else
+    {
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
+    }
+
+    RF62X_cleanup_msg(msg);
+    free(msg); msg = NULL;
+    return status;
 }
 
 
