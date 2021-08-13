@@ -49,7 +49,7 @@ API_EXPORT void set_platform_adapter_settings(
  */
 API_EXPORT rfUint8 search_scanners(
         vector_t *list, scanner_types_t type,
-        uint32_t timeout, protocol_types_t protocol);
+        rfUint32 timeout, protocol_types_t protocol);
 
 /**
  * @brief get_info_about_scanner - Get information about scanner from
