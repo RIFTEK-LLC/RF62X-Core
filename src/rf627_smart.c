@@ -722,7 +722,7 @@ rf627_smart_profile2D_t* rf627_smart_get_profile2D(rf627_smart_t* scanner, rfBoo
                     case DTY_ProfileInterpolated:
                         z = *(rfUint16*)(&RX[profile_header_size + i*4 + 2]);
                         x = *(rfInt16*)(&RX[profile_header_size + i*4]);
-                        if (zero_points == 0 && z > 0 && x != 0)
+                        if (zero_points == FALSE && z > 0)
                         {
                             pt.x = (rfFloat)((rfDouble)(x) * (rfDouble)(profile->header.xemr) /
                                              (rfDouble)(profile->header.discrete_value));
@@ -4593,7 +4593,7 @@ rfBool rf627_smart_get_dumps_profiles_by_service_protocol(
                         case DTY_ProfileInterpolated:
                             z = *(rfUint16*)(&((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + ii*4 + 2]);
                             x = *(rfInt16*)(&((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + ii*4]);
-                            if (zero_points == 0 && z > 0 && x != 0)
+                            if (zero_points == 0 && z > 0)
                             {
                                 pt.x = (rfFloat)((rfDouble)(x) * (rfDouble)(profile_array[i]->rf627smart_profile2D->header.xemr) /
                                                  (rfDouble)(profile_array[i]->rf627smart_profile2D->header.discrete_value));
