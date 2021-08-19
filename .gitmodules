@@ -1,9 +1,9 @@
 [submodule "3rdparty/RF627-Protocol"]
 	path = 3rdparty/RF627-Protocol
-	url = https://github.com/RIFTEK-LLC/RF627-Protocol.git
+	url = ../RF627-Protocol.git
 [submodule "3rdparty/RF62X-Protocol"]
 	path = 3rdparty/RF62X-Protocol
-	url = https://github.com/RIFTEK-LLC/RF62X-Protocol.git
+	url = ../RF62X-Protocol.git
 [submodule "3rdparty/RF-PlatformUtils"]
 	path = 3rdparty/RF-PlatformUtils
-	url = https://github.com/RIFTEK-LLC/RF-PlatformUtils.git
+	url = ../RF-PlatformUtils.git
