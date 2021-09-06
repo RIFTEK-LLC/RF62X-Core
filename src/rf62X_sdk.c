@@ -1857,3 +1857,17 @@ uint8_t send_data_to_scanner_periphery(
     }
     return FALSE;
 }
+
+uint8_t receive_data_from_scanner_periphery(
+        scanner_base_t *device, const rfChar *iface_name, rfUint32 timeout,
+        rfUint16 count, rfChar **out, rfUint32 *out_size)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE;
+    case kRF627_SMART:
+        return rf627_smart_receive_from_periphery_by_service_protocol(
+                    device->rf627_smart, iface_name, count, out, out_size, timeout);
+    }
+    return FALSE;
+}
