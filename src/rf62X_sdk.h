@@ -84,7 +84,7 @@ API_EXPORT rfUint8 connect_to_scanner(
  * @return TRUE on success
  */
 API_EXPORT rfUint8 check_connection_to_scanner(
-        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+        scanner_base_t *device, rfUint32 timeout, protocol_types_t protocol);
 
 
 /**
@@ -107,12 +107,14 @@ API_EXPORT rfUint8 disconnect_from_scanner(
 API_EXPORT void free_scanner(scanner_base_t *device);
 
 /**
- * @brief get_profile2D_from_scanner - Get measurement from scanner's data
- * stream
+ * @brief get_profile2D_from_scanner - Get measurement from scanner's
+ * data stream
+ *
  * @param[in] device - ptr to scanner
  * @param[in] zero_points Enable zero points in return profile2D
  * @param[in] realtime Enable getting profile in real time (buffering disabled)
  * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ *
  * @return ptr to rf627_profile_t structure
  */
 API_EXPORT rf627_profile2D_t* get_profile2D_from_scanner(
@@ -132,6 +134,7 @@ API_EXPORT uint8_t send_profile2D_request_to_scanner(
 
 /**
  * @brief free_profile2D - Cleanup resources allocated for profile2D
+ *
  * @param[in] profile Ptr to rf627_profile2D_t
  */
 API_EXPORT void free_profile2D(rf627_profile2D_t* profile);
@@ -165,27 +168,32 @@ API_EXPORT rf627_frame_t* get_frame_from_scanner(
 /**
  * @brief read_params_from_scanner - Read parameters from device to rfInternal
  * structure.
- * This structure is accessible via get_params() function
- * @param device - ptr to scanner
- * @param protocol -  protocol's type (Service Protocol, ENIP, Modbus-TCP)
- * @return 0 on success
+ *
+ * @param device Ptr to scanner
+ * @param timeout Time to read parameters
+ * @param protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ *
+ * @return TRUE on success
  */
 API_EXPORT rfUint8 read_params_from_scanner(
-        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+        scanner_base_t *device, rfUint32 timeout, protocol_types_t protocol);
 
 /**
- * @brief write_params_to_scanner - Write current parameters to device's memory
- * @param device - ptr to scanner
- * @param protocol - protocol's type (Service Protocol, ENIP, Modbus-TCP)
- * @return 0 on success
+ * @brief write_params_to_scanner - Send current parameters to device
+ *
+ * @param device Ptr to scanner
+ * @param timeout Time to send parameters
+ * @param protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ *
+ * @return TRUE on success
  */
 API_EXPORT rfUint8 write_params_to_scanner(
-        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+        scanner_base_t *device, rfUint32 timeout, protocol_types_t protocol);
 /**
  * @brief save_params_to_scanner - Save current parameters to device's memory
  * @param device - ptr to scanner
  * @param protocol - protocol's type (Service Protocol, ENIP, Modbus-TCP)
- * @return 0 on success
+ * @return TRUE on success
  */
 API_EXPORT rfUint8 save_params_to_scanner(
         scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
@@ -194,15 +202,17 @@ API_EXPORT rfUint8 save_params_to_scanner(
  * @brief load_recovery_params_from_scanner - Loading parameters from recovery
  * @param device - ptr to scanner
  * @param protocol - protocol's type (Service Protocol, ENIP, Modbus-TCP)
- * @return 0 on success
+ * @return TRUE on success
  */
 API_EXPORT rfUint8 load_recovery_params_from_scanner(
         scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
 
 /**
  * @brief get_parameter - Search parameters by his name
+ *
  * @param device - ptr to scanner
  * @param param_name - name of parameter
+ *
  * @return param on success, else - null
  */
 API_EXPORT parameter_t* get_parameter(
@@ -210,9 +220,11 @@ API_EXPORT parameter_t* get_parameter(
 
 /**
  * @brief set_parameter - Set parameter
- * @param device - ptr to scanner
- * @param param - setting parameter
- * @return 0 if success
+ *
+ * @param device Ptr to scanner
+ * @param param Parameter name
+ *
+ * @return TRUE on success
  */
 API_EXPORT rfUint8 set_parameter(
         scanner_base_t *device, parameter_t* param);

@@ -799,7 +799,7 @@ void free_old_parameter(parameter_t* p)
 //    p = NULL;
 }
 
-rfUint8 read_params_from_scanner(scanner_base_t *device, uint32_t timeout, protocol_types_t protocol)
+rfUint8 read_params_from_scanner(scanner_base_t *device, rfUint32 timeout, protocol_types_t protocol)
 {
     switch (device->type) {
     case kRF627_OLD:
