@@ -29,12 +29,16 @@
 API_EXPORT rfChar* core_version();
 
 
-/*!
- * @brief init_platform_dependent_methods - Init platform dependent methods and settings
- * @param memory_methods Structure with platform-specific methods for work with memory
- * @param iostream_methods Structure with platform-specific methods for work with iostream
- * @param network_methods Structure with platform-specific methods for work with network
- * @param adapter_settings Structure with platform-specific settings
+/**
+ * @brief Init platform dependent methods and settings
+ *
+ * @param memory_methods Structure with platform-specific methods for work with
+ * memory
+ * @param iostream_methods Structure with platform-specific methods for work
+ * with iostream
+ * @param network_methods Structure with platform-specific methods for work
+ * with network
+ * @param adapter_settings Structure with adapter settings
  */
 API_EXPORT void init_platform_dependent_methods(
         memory_platform_dependent_methods_t* memory_methods,
