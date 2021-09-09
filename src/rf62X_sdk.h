@@ -190,13 +190,16 @@ API_EXPORT rfUint8 read_params_from_scanner(
 API_EXPORT rfUint8 write_params_to_scanner(
         scanner_base_t *device, rfUint32 timeout, protocol_types_t protocol);
 /**
- * @brief save_params_to_scanner - Save current parameters to device's memory
- * @param device - ptr to scanner
- * @param protocol - protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @brief save_params_to_scanner - Save changes to device's memory
+ *
+ * @param device Ptr to scanner
+ * @param timeout Time to save parameters
+ * @param protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ *
  * @return TRUE on success
  */
 API_EXPORT rfUint8 save_params_to_scanner(
-        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+        scanner_base_t *device, rfUint32 timeout, protocol_types_t protocol);
 
 /**
  * @brief load_recovery_params_from_scanner - Loading parameters from recovery
@@ -230,19 +233,23 @@ API_EXPORT rfUint8 set_parameter(
         scanner_base_t *device, parameter_t* param);
 
 parameter_t* create_parameter_from_type(const rfChar* type);
+
 /**
  * @brief free_parameter - free parameter
+ *
  * @param param: ptr to parameter
  * @param type: scaner type
  */
-API_EXPORT void free_parameter(
-        parameter_t* param, scanner_types_t type);
+API_EXPORT void free_parameter(parameter_t* param, scanner_types_t type);
+
 /**
  * @brief set_parameter_by_name - Set parameters by his name
+ *
  * @param device - ptr to scanner
  * @param param_name - parameter name
  * @param value - value
- * @return 0 if success
+ *
+ * @return TRUE on success
  */
 API_EXPORT rfUint8 set_parameter_by_name(
         scanner_base_t *device, const char* param_name,
