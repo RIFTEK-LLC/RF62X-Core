@@ -243,7 +243,7 @@ rfUint8 rf627_smart_search_by_service_protocol(
  * @return number of detected scanners on success or error code
  */
 rfUint8 rf627_smart_search_by_ip_by_service_protocol(
-        vector_t* list, rfUint32 ip_host, rfUint32 ip_src, rfUint32 timeout);
+        vector_t* list, rfUint32 ip_host, rfChar* ip_src, rfUint32 timeout);
 
 
 /**

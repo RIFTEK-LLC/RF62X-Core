@@ -1224,7 +1224,7 @@ rfUint8 rf627_smart_search_by_service_protocol(vector_t *scanner_list, rfUint32 
 
 
 rfUint8 rf627_smart_search_by_ip_by_service_protocol(
-        vector_t* scanner_list, rfUint32 ip_host, rfUint32 ip_src, rfUint32 timeout)
+        vector_t* scanner_list, rfUint32 ip_host, rfChar* ip_src, rfUint32 timeout)
 {
     if (search_history == NULL)
     {
@@ -1253,8 +1253,7 @@ rfUint8 rf627_smart_search_by_ip_by_service_protocol(
         char* host_ip_addr          = NULL;
         uint32_to_ip_string(ip_host, &host_ip_addr);
         // Set dst_ip_addr modify ip_addr (*.*.*.255)
-        char* dst_ip_addr           = NULL;
-        uint32_to_ip_string(((rfUint32)(ip_src)), &dst_ip_addr);
+        char* dst_ip_addr           = ip_src;
         // No fixed port (automatically assigned by the operating system)
         rfUint32 host_udp_port = 0;
         // Fixed service scanner port.
@@ -1273,7 +1272,7 @@ rfUint8 rf627_smart_search_by_ip_by_service_protocol(
         RF62X_channel_t channel;
         rfBool is_inited = RF62X_channel_init(&channel, config);
 
-        free(host_ip_addr); free(dst_ip_addr); free(config);
+        free(host_ip_addr); free(config);
 
         if (is_inited == TRUE)
         {
