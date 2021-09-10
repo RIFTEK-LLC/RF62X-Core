@@ -1223,6 +1223,125 @@ rfUint8 rf627_smart_search_by_service_protocol(vector_t *scanner_list, rfUint32 
 }
 
 
+rfUint8 rf627_smart_search_by_ip_by_service_protocol(
+        vector_t* scanner_list, rfUint32 ip_host, rfUint32 ip_src, rfUint32 timeout)
+{
+    if (search_history == NULL)
+    {
+        search_history = (vector_t*)calloc(1, sizeof (vector_t));
+        //Initialization vector
+        vector_init(&search_history);
+    }
+
+    // Если изменился указатель на старый результат поиска, значит поиск был
+    // запущен повторно. Поэтому неоходимо очистить память, выделенную во
+    // время предыдущего поиска.
+    if (current_search_result != scanner_list && current_search_result != NULL)
+    {
+        while (vector_count(current_search_result) > 0) {
+            vector_delete(current_search_result, vector_count(current_search_result)-1);
+        }
+        free (current_search_result); current_search_result = NULL;
+    }
+    current_search_result = scanner_list;
+
+    rfUint8 scanner_count = 0;
+    {
+        // Init RF62X-Protocol channel
+        rfUint32 host_device_uid    = 777;
+        // Set host_ip_addr from ip_addr
+        char* host_ip_addr          = NULL;
+        uint32_to_ip_string(ip_host, &host_ip_addr);
+        // Set dst_ip_addr modify ip_addr (*.*.*.255)
+        char* dst_ip_addr           = NULL;
+        uint32_to_ip_string(((rfUint32)(ip_src)), &dst_ip_addr);
+        // No fixed port (automatically assigned by the operating system)
+        rfUint32 host_udp_port = 0;
+        // Fixed service scanner port.
+        rfUint32 dst_udp_port = 50011;
+        // Other parameters
+        rfUint32 socket_timeout = 100;
+        rfUint32 max_packet_size = 65535;
+        rfUint32 max_data_size = 20000000;
+
+        // generate config string for RF62X-Protocol
+        char* config = generate_config_string(
+                    host_device_uid, host_ip_addr, dst_ip_addr,
+                    host_udp_port, dst_udp_port, socket_timeout,
+                    max_packet_size, max_data_size);
+
+        RF62X_channel_t channel;
+        rfBool is_inited = RF62X_channel_init(&channel, config);
+
+        free(host_ip_addr); free(dst_ip_addr); free(config);
+
+        if (is_inited == TRUE)
+        {
+            // cmd_name - this is logical port/path where data will be send
+            char* cmd_name                      = "GET_HELLO";
+            // payload - this is the data to be sent and their size
+            char* payload                       = NULL;
+            uint32_t payload_size               = 0;
+            // data_type - this is the type of packaging of the sent data
+            char* data_type                     = "blob";  // mpack, json, blob..
+            uint8_t is_check_crc                = FALSE;   // check crc disabled
+            uint8_t is_confirmation             = FALSE;   // confirmation disabled
+            uint8_t is_one_answ                 = TRUE;   // wait all answers
+            uint32_t waiting_time               = timeout; // ms
+            uint32_t resends                    = is_confirmation ? 3 : 0;
+            // callbacks for request
+            RF62X_answ_callback answ_clb        = rf627_smart_get_hello_callback;
+            RF62X_timeout_callback timeout_clb  = rf627_smart_get_hello_timeout_callback;
+            RF62X_free_callback free_clb        = rf627_smart_get_hello_free_result_callback;
+
+            // Create request message
+            RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
+                                                     is_check_crc, is_confirmation, is_one_answ,
+                                                     waiting_time, resends,
+                                                     answ_clb, timeout_clb, free_clb);
+
+            // Send request msg
+            if (RF62X_channel_send_msg(&channel, msg))
+            {
+                TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
+
+                // try to find answer to rqst
+                pthread_mutex_lock(msg->result_mutex);
+                void* result = RF62X_find_result_to_rqst_msg(&channel, msg, waiting_time);
+                if (result != NULL)
+                {
+                    // Answer:
+                    // {
+                    //    count: uint32_t
+                    // }
+                    typedef struct
+                    {
+                        uint32_t count;
+                    }answer;
+
+                    scanner_count = ((answer*)result)->count;
+                }
+                pthread_mutex_unlock(msg->result_mutex);
+            }
+            else
+            {
+                TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
+            }
+
+            // Cleanup msg
+            RF62X_cleanup_msg(msg);
+            free(msg); msg = NULL;
+        }else
+        {
+            TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "Smart channel not initialized: %s", config);
+        }
+
+        RF62X_channel_cleanup(&channel);
+    }
+
+    return scanner_count;
+}
+
 //
 // RF627-Smart (v2.x.x)
 // Profile2D Software Request Methods

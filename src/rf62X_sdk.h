@@ -51,6 +51,10 @@ API_EXPORT rfUint8 search_scanners(
         vector_t *list, scanner_types_t type,
         rfUint32 timeout, protocol_types_t protocol);
 
+API_EXPORT rfUint8 search_scanners_by_ip(
+        vector_t *list, scanner_types_t type, rfChar* ip,
+        rfUint32 timeout, protocol_types_t protocol);
+
 /**
  * @brief get_info_about_scanner - Get information about scanner from
  * hello packet

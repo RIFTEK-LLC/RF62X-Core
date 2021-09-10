@@ -231,6 +231,20 @@ typedef struct
 rfUint8 rf627_smart_search_by_service_protocol(
         vector_t* list, rfUint32 ip_addr, rfUint32 timeout);
 
+/**
+ * @brief rf627_smart_search_by_service_protocol - Search for RF627-smart
+ * devices over network
+ *
+ * @param list - ptr to list of rf627-smart objects. If not null list will be
+ *        filled with found devices
+ * @param ip_addr - the IP address of the adapter on which the connection
+ *        should be established.
+ *
+ * @return number of detected scanners on success or error code
+ */
+rfUint8 rf627_smart_search_by_ip_by_service_protocol(
+        vector_t* list, rfUint32 ip_host, rfUint32 ip_src, rfUint32 timeout);
+
 
 /**
  * @brief rf627_smart_get_scanner_info_by_service_protocol - Get info about

@@ -63,6 +63,47 @@ rfUint8 search_scanners(vector_t *list, scanner_types_t model, rfUint32 timeout,
     return 0;
 }
 
+rfUint8 search_scanners_by_ip(vector_t *list, scanner_types_t model, rfChar *ip, rfUint32 timeout, protocol_types_t protocol)
+{
+    switch (model) {
+    case kRF627_OLD:
+        switch (protocol) {
+        case kSERVICE:
+            return 0;
+            break;
+        case kETHERNET_IP:
+        case kMODBUS_TCP:
+            return 1; // RF627-old doesn't support this protocol
+            break;
+        default:
+            return 1; // Unknown protocol type
+            break;
+        }
+        break;
+    case kRF627_SMART:
+        switch (protocol) {
+        case kSERVICE:
+            rf627_smart_search_by_ip_by_service_protocol(
+                        list, network_platform.network_settings.host_ip_addr, ip, timeout);
+            break;
+            break;
+        case kETHERNET_IP:
+            break;
+        case kMODBUS_TCP:
+            break;
+        default:
+            return 1; // Unknown protocol type
+            break;
+        }
+        break;
+    default:
+        return 2; // Unknown device type
+        break;
+    }
+    return 0;
+}
+
+
 
 hello_information get_info_about_scanner(scanner_base_t *device, protocol_types_t protocol)
 {
@@ -1871,3 +1912,4 @@ uint8_t receive_data_from_scanner_periphery(
     }
     return FALSE;
 }
+
