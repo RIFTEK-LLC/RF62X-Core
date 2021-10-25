@@ -215,6 +215,8 @@ typedef struct
     rf627_smart_hello_info_by_service_protocol info_by_service_protocol;
     rf627_smart_calib_table_t calib_table;
     rfBool is_connected;
+    vector_t *protocol_settings_list;
+    pthread_mutex_t protocol_settings_mutex;
 }rf627_smart_t;
 
 /**
@@ -584,6 +586,37 @@ rf627_smart_calib_table_t* rf627_smart_get_calibration_table(rf627_smart_t* scan
  */
 rfBool rf627_smart_set_calibration_table(
         rf627_smart_t* scanner, rf627_smart_calib_table_t* table);
+
+/**
+ * @brief rf627_smart_add_protocol_settings_for_cmd - Adding custom protocol
+ * settings for a specific command
+ *
+ * @param scanner Ptr to scanner
+ * @param cmd_name Command name
+ * @param crc_enabled Enable checksum verification
+ * @param confirm_enabled Enable confirmation
+ * @param one_answ Wait for one response per request
+ * @param waiting_time Time to wait for a response
+ * @param resends_count Number of repetitions when a packet is lost
+ *
+ * @return true on success, else - false
+ */
+rfBool rf627_smart_add_protocol_settings_for_cmd(
+        rf627_smart_t *scanner, const char *cmd_name,
+        rfUint8 crc_enabled, rfUint8 confirm_enabled, rfUint8 one_answ,
+        rfUint32 waiting_time, rfUint32 resends_count);
+
+/**
+ * @brief rf627_smart_remove_protocol_settings_for_cmd - Remove custom protocol
+ * settings for a specific command
+ *
+ * @param scanner Ptr to scanner
+ * @param cmd_name Command name
+ *
+ * @return true on success, else - false
+ */
+rfBool rf627_smart_remove_protocol_settings_for_cmd(
+        rf627_smart_t *scanner, const char *cmd_name);
 
 typedef struct
 {

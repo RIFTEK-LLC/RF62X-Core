@@ -1913,3 +1913,32 @@ uint8_t receive_data_from_scanner_periphery(
     return FALSE;
 }
 
+
+uint8_t add_protocol_settings_for_cmd(
+        scanner_base_t *device, const char *cmd_name,
+        rfUint8 crc_enabled, rfUint8 confirm_enabled, rfUint8 one_answ,
+        rfUint32 waiting_time,  rfUint32 resends_count)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE;
+    case kRF627_SMART:
+        return rf627_smart_add_protocol_settings_for_cmd(
+                    device->rf627_smart, cmd_name, crc_enabled,
+                    confirm_enabled, one_answ, waiting_time, resends_count);
+    }
+    return FALSE;
+}
+
+uint8_t remove_protocol_settings_for_cmd(
+        scanner_base_t *device, const char *cmd_name)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE;
+    case kRF627_SMART:
+        return rf627_smart_remove_protocol_settings_for_cmd(
+                    device->rf627_smart, cmd_name);
+    }
+    return FALSE;
+}

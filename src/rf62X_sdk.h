@@ -420,6 +420,35 @@ API_EXPORT uint8_t receive_data_from_scanner_periphery(
         scanner_base_t *device, const rfChar* iface_name, rfUint32 timeout,
         rfUint16 count, rfChar** out, rfUint32* out_size);
 
+/**
+ * @brief add_protocol_settings_for_cmd - Adding custom protocol settings for a
+ * specific command
+ *
+ * @param device Ptr to scanner
+ * @param cmd_name Command name
+ * @param crc_enabled Enable checksum verification
+ * @param confirm_enabled Enable confirmation
+ * @param one_answ Wait for one response per request
+ * @param waiting_time Time to wait for a response
+ * @param resends_count Number of repetitions when a packet is lost
+ *
+ * @return true on success, else - false
+ */
+API_EXPORT uint8_t add_protocol_settings_for_cmd(
+        scanner_base_t *device, const char* cmd_name, rfUint8 crc_enabled,
+        rfUint8 confirm_enabled, rfUint8 one_answ, rfUint32 waiting_time, rfUint32 resends_count);
+
+/**
+ * @brief remove_protocol_settings_for_cmd - Clear custom protocol settings for a
+ * specific command.
+ *
+ * @param device Ptr to scanner
+ * @param cmd_name Command name
+ *
+ * @return true on success, else - false
+ */
+API_EXPORT uint8_t remove_protocol_settings_for_cmd(
+        scanner_base_t *device, const char* cmd_name);
 
 /** TODO
  * @brief set_parameter - Search parameters by his name

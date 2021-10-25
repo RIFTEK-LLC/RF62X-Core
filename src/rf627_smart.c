@@ -38,6 +38,8 @@ rf627_smart_t* rf627_smart_create_from_hello_msg(char* data, rfUint32 data_size)
     memset(rf627_smart, 0, sizeof (rf627_smart_t));
     rf627_smart->is_connected = FALSE;
     vector_init(&rf627_smart->params_list);
+    vector_init(&rf627_smart->protocol_settings_list);
+    pthread_mutex_init(&rf627_smart->protocol_settings_mutex, NULL);
 
     int32_t result = FALSE;
 
@@ -253,6 +255,19 @@ void rf627_smart_free(rf627_smart_t* scanner)
 
                     vector_delete(scanner->params_list, vector_count(scanner->params_list)-1);
                 }
+                vector_free(scanner->params_list);
+
+                pthread_mutex_lock(&scanner->protocol_settings_mutex);
+                while (vector_count(scanner->protocol_settings_list) > 0)
+                {
+                    rf627_smart_protocol_cmd_settings_t* p = vector_get(scanner->protocol_settings_list, vector_count(scanner->protocol_settings_list)-1);
+                    memory_platform.rf_free(p->cmd_name);
+                    memory_platform.rf_free(p);
+
+                    vector_delete(scanner->protocol_settings_list, vector_count(scanner->protocol_settings_list)-1);
+                }
+                vector_free(scanner->protocol_settings_list);
+                pthread_mutex_unlock(&scanner->protocol_settings_mutex);
 
                 if (scanner->info_by_service_protocol.user_general_deviceName != NULL)
                 {
@@ -1496,6 +1511,23 @@ rfBool rf627_smart_send_profile2D_request_to_scanner(rf627_smart_t* scanner, rfU
     RF62X_timeout_callback timeout_clb  = rf627_smart_send_profile2D_request_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_send_profile2D_request_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -1674,6 +1706,23 @@ rfBool rf627_smart_check_connection_by_service_protocol(rf627_smart_t* scanner, 
     RF62X_answ_callback answ_clb        = rf627_smart_check_connection_callback;
     RF62X_timeout_callback timeout_clb  = rf627_smart_check_connection_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_check_connection_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
 
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
@@ -3258,6 +3307,23 @@ rfBool rf627_smart_read_params_from_scanner(rf627_smart_t* scanner, rfUint32 tim
     RF62X_timeout_callback timeout_clb  = rf627_smart_read_params_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_read_params_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -3583,6 +3649,23 @@ rfBool rf627_smart_write_params_to_scanner(rf627_smart_t* scanner, rfUint32 time
         RF62X_timeout_callback timeout_clb  = rf627_smart_write_params_timeout_callback;
         RF62X_free_callback free_clb        = rf627_smart_write_params_free_result_callback;
 
+        rf627_smart_protocol_cmd_settings_t* p = NULL;
+        pthread_mutex_lock(&scanner->protocol_settings_mutex);
+        for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+        {
+            p = vector_get(scanner->protocol_settings_list, i);
+            if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+            {
+                is_check_crc = p->is_check_crc;
+                is_confirmation = p->is_confirmation;
+                is_one_answ = p->is_one_answ;
+                waiting_time = p->waiting_time;
+                resends = is_confirmation ? p->resends_count : 0;
+                break;
+            }
+        }
+        pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
         // Create request message
         RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                                  is_check_crc, is_confirmation, is_one_answ,
@@ -3789,6 +3872,23 @@ rfBool rf627_smart_save_params_to_scanner(rf627_smart_t* scanner, rfUint32 timeo
     RF62X_timeout_callback timeout_clb  = rf627_smart_save_params_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_save_params_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -3976,6 +4076,23 @@ rfBool rf627_smart_save_recovery_params_to_scanner(rf627_smart_t* scanner, rfUin
     RF62X_timeout_callback timeout_clb  = rf627_smart_save_recovery_params_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_save_recovery_params_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -4162,6 +4279,23 @@ rfBool rf627_smart_load_recovery_params_from_scanner(rf627_smart_t* scanner, rfU
     RF62X_answ_callback answ_clb        = rf627_smart_load_recovery_params_callback;
     RF62X_timeout_callback timeout_clb  = rf627_smart_load_recovery_params_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_load_recovery_params_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
 
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
@@ -4472,6 +4606,23 @@ rf627_smart_frame_t* rf627_smart_get_frame(rf627_smart_t* scanner, rfUint32 time
     RF62X_timeout_callback timeout_clb  = rf627_smart_get_frame_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_get_frame_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -4692,6 +4843,23 @@ rfBool rf627_smart_get_dumps_profiles_by_service_protocol(
     RF62X_answ_callback answ_clb        = rf627_smart_get_dumps_profiles_callback;
     RF62X_timeout_callback timeout_clb  = rf627_smart_get_dumps_profiles_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_get_dumps_profiles_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
 
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
@@ -5022,6 +5190,23 @@ rfBool rf627_smart_get_authorization_token_by_service_protocol(rf627_smart_t* sc
     RF62X_timeout_callback timeout_clb  = rf627_smart_get_authorization_token_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_get_authorization_token_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -5238,6 +5423,23 @@ rfBool rf627_smart_set_authorization_key_by_service_protocol(rf627_smart_t* scan
     RF62X_answ_callback answ_clb        = rf627_smart_set_authorization_key_callback;
     RF62X_timeout_callback timeout_clb  = rf627_smart_set_authorization_key_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_set_authorization_key_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
 
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
@@ -5499,6 +5701,23 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
     RF62X_answ_callback answ_clb        = rf627_smart_read_calibration_data_callback;
     RF62X_timeout_callback timeout_clb  = rf627_smart_read_calibration_data_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_read_calibration_data_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
 
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
@@ -5842,6 +6061,23 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
     RF62X_timeout_callback timeout_clb  = rf627_smart_write_calibration_data_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_write_calibration_data_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -6032,6 +6268,23 @@ rfBool rf627_smart_save_calibration_data_by_service_protocol(rf627_smart_t* scan
     RF62X_timeout_callback timeout_clb  = rf627_smart_save_calibration_data_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_save_calibration_data_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -6218,6 +6471,23 @@ rfBool rf627_smart_reboot_device_request_to_scanner(rf627_smart_t* scanner)
     RF62X_answ_callback answ_clb        = rf627_smart_reboot_device_callback;
     RF62X_timeout_callback timeout_clb  = rf627_smart_reboot_device_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_reboot_device_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
 
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
@@ -6406,6 +6676,23 @@ rfBool rf627_smart_reboot_sensor_request_to_scanner(rf627_smart_t* scanner)
     RF62X_answ_callback answ_clb        = rf627_smart_reboot_sensor_callback;
     RF62X_timeout_callback timeout_clb  = rf627_smart_reboot_sensor_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_reboot_sensor_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
 
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
@@ -6702,6 +6989,23 @@ rfBool rf627_smart_send_to_periphery_by_service_protocol(
     RF62X_timeout_callback timeout_clb  = rf627_smart_send_to_periphery_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_send_to_periphery_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -6995,6 +7299,23 @@ rfBool rf627_smart_receive_from_periphery_by_service_protocol(
     RF62X_timeout_callback timeout_clb  = rf627_smart_receive_from_periphery_timeout_callback;
     RF62X_free_callback free_clb        = rf627_smart_receive_from_periphery_free_result_callback;
 
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
     // Create request message
     RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
                                              is_check_crc, is_confirmation, is_one_answ,
@@ -7109,6 +7430,63 @@ rfBool rf627_smart_set_calibration_table(rf627_smart_t* scanner, rf627_smart_cal
     memcpy(scanner->calib_table.m_Data, table->m_Data, scanner->calib_table.m_DataSize * sizeof (uint8_t));
 
     return TRUE;
+}
+
+rfBool rf627_smart_add_protocol_settings_for_cmd(
+        rf627_smart_t *scanner, const char *cmd_name,
+        rfUint8 crc_enabled, rfUint8 confirm_enabled, rfUint8 one_answ,
+        rfUint32 waiting_time, rfUint32 resends_count)
+{
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            p->is_check_crc = crc_enabled;
+            p->is_confirmation = confirm_enabled;
+            p->is_one_answ = one_answ;
+            p->waiting_time = waiting_time;
+            p->resends_count = resends_count;
+            pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+            return TRUE;
+        }
+    }
+
+    p = memory_platform.rf_calloc(1, sizeof (rf627_smart_protocol_cmd_settings_t));
+    p->cmd_name = memory_platform.rf_calloc(1, rf_strlen(cmd_name) + 1);
+    memcpy(p->cmd_name, cmd_name, rf_strlen(cmd_name));
+    p->is_check_crc = crc_enabled;
+    p->is_confirmation = confirm_enabled;
+    p->is_one_answ = one_answ;
+    p->waiting_time = waiting_time;
+    p->resends_count = resends_count;
+    vector_add(scanner->protocol_settings_list, p);
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+    return TRUE;
+}
+
+rfBool rf627_smart_remove_protocol_settings_for_cmd(
+        rf627_smart_t *scanner, const char *cmd_name)
+{
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            memory_platform.rf_free(p->cmd_name);
+            memory_platform.rf_free(p);
+
+            vector_delete(scanner->protocol_settings_list, i);
+            pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+            return TRUE;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+    return FALSE;
 }
 
 char* generate_config_string(

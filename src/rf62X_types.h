@@ -621,6 +621,16 @@ typedef struct
 
 }rf627_smart_hello_info_by_service_protocol;
 
+typedef struct
+{
+    char* cmd_name;
+    uint8_t is_check_crc;
+    uint8_t is_confirmation;
+    uint8_t is_one_answ;
+    uint32_t waiting_time;
+    uint32_t resends_count;
+}rf627_smart_protocol_cmd_settings_t;
+
 //Структура для перечислений - сопоставляет значение параметра и его текстовый ключ
 typedef struct
 {
