@@ -7392,6 +7392,224 @@ rfBool rf627_smart_receive_from_periphery_by_service_protocol(
     return status;
 }
 
+
+//
+// RF627-Smart (v2.x.x)
+// Custom Command Method
+//
+rfInt8 rf627_smart_send_custom_command_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+{
+    answ_count++;
+    RF62X_msg_t* msg = rqst_msg;
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+          msg->cmd_name, msg->_uid, data_size);
+
+    rfSize scanner_list_size = vector_count(search_history);
+    for (rfUint32 i = 0; i < scanner_list_size; i++)
+    {
+        scanner_base_t* scanner = (scanner_base_t*)vector_get(search_history, i);
+        if(scanner->type == kRF627_SMART)
+            if (scanner->rf627_smart->info_by_service_protocol.
+                    fact_general_serial == device_id)
+                existing = TRUE;
+    }
+
+    // If scanner exist
+    if (existing)
+    {
+        // Answer:
+        // {
+        //    status: Bool,
+        //    payload: Blob,
+        //    payload_size: Uint32,
+        // }
+        typedef struct
+        {
+            rfBool status;
+            char* payload;
+            uint32_t payload_size;
+        }answer;
+
+        if (msg->result == NULL)
+        {
+            msg->result = calloc(1, sizeof (answer));
+        }
+
+        ((answer*)msg->result)->status = TRUE;
+        ((answer*)msg->result)->payload_size = data_size;
+        if (data_size > 0)
+        {
+            ((answer*)msg->result)->payload = (char*)memory_platform.rf_calloc(data_size,1);
+            memcpy(((answer*)msg->result)->payload, data, data_size);
+        }
+
+        status = TRUE;
+    }
+
+    return status;
+}
+rfInt8 rf627_smart_send_custom_command_timeout_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    return TRUE;
+}
+rfInt8 rf627_smart_send_custom_command_free_result_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    pthread_mutex_lock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+    if (msg->result != NULL)
+    {
+        // Answer:
+        // {
+        //    status: Bool,
+        //    payload: Blob,
+        //    payload_size: Uint32,
+        // }
+        typedef struct
+        {
+            rfBool status;
+            char* payload;
+            uint32_t payload_size;
+        }answer;
+
+        answer* answ = msg->result;
+
+        if (answ->status)
+        {
+            if (answ->payload_size > 0)
+                    free(answ->payload);
+        }
+
+        free(msg->result);
+        msg->result = NULL;
+    }
+    pthread_mutex_unlock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+
+    return TRUE;
+}
+rfBool rf627_smart_send_custom_command(
+        rf627_smart_t* scanner, const rfChar* cmd_name, const rfChar* data_type,
+        rfChar* payload, uint32_t payload_size, rfChar** out, rfUint32* out_size)
+{
+    uint8_t is_check_crc                = FALSE;   // check crc disabled
+    uint8_t is_confirmation             = FALSE;   // confirmation disabled
+    uint8_t is_one_answ                 = TRUE;    // wait only one answer
+    uint32_t waiting_time               = 100; // ms
+    uint32_t resends                    = is_confirmation ? 3 : 0;
+    // callbacks for request
+    RF62X_answ_callback answ_clb        = rf627_smart_send_custom_command_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_send_custom_command_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_send_custom_command_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
+    // Create request message
+    RF62X_msg_t* msg = RF62X_create_rqst_msg((rfChar*)cmd_name, payload, payload_size, (rfChar*)data_type,
+                                             is_check_crc, is_confirmation, is_one_answ,
+                                             waiting_time, resends,
+                                             answ_clb, timeout_clb, free_clb);
+
+    rfBool status = FALSE;
+    // Send msg
+    if (RF62X_channel_send_msg(&scanner->channel, msg))
+    {
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
+
+        // try to find answer to rqst
+        pthread_mutex_lock(msg->result_mutex);
+        void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+        if (result != NULL)
+        {
+            // Answer:
+            // {
+            //    status: Bool,
+            //    payload: Blob,
+            //    payload_size: Uint32,
+            // }
+            typedef struct
+            {
+                rfBool status;
+                char* payload;
+                uint32_t payload_size;
+            }answer;
+
+            answer* answ = result;
+
+            if (answ->status == TRUE)
+            {
+                status = TRUE;
+                TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+                      "%s%s\n",
+                      "Get response to request! "
+                      "Response status: ", "OK");
+
+                *out_size = answ->payload_size;
+                if (*out_size > 0)
+                {
+                    (*out) = calloc(1, *out_size);
+                    memcpy((*out), answ->payload, *out_size);
+                }
+            }
+            else
+            {
+                status = FALSE;
+                TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,
+                      "%s%s\n",
+                      "Get response to request! "
+                      "Response status: ","ERROR");
+            }
+        }else
+        {
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
+        }
+        pthread_mutex_unlock(msg->result_mutex);
+    }
+    else
+    {
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
+    }
+
+    RF62X_cleanup_msg(msg);
+    free(msg); msg = NULL;
+    return status;
+}
+
+
+
+
+
+
+
+
 rf627_smart_calib_table_t* rf627_smart_get_calibration_table(rf627_smart_t* scanner)
 {
     rf627_smart_calib_table_t* _calib_table = (rf627_smart_calib_table_t*)calloc(1, sizeof (rf627_smart_calib_table_t));

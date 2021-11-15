@@ -1930,6 +1930,21 @@ uint8_t add_protocol_settings_for_cmd(
     return FALSE;
 }
 
+uint8_t send_custom_command_to_scanner(
+        scanner_base_t *device, const rfChar* cmd_name, const rfChar* data_type,
+        rfChar* in, rfUint32 in_size, rfChar** out, rfUint32* out_size)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE;
+    case kRF627_SMART:
+        return rf627_smart_send_custom_command(
+                    device->rf627_smart, cmd_name, data_type, in, in_size, out, out_size);
+    }
+
+    return FALSE;
+}
+
 uint8_t remove_protocol_settings_for_cmd(
         scanner_base_t *device, const char *cmd_name)
 {

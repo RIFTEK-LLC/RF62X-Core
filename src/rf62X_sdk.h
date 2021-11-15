@@ -420,6 +420,9 @@ API_EXPORT uint8_t receive_data_from_scanner_periphery(
         scanner_base_t *device, const rfChar* iface_name, rfUint32 timeout,
         rfUint16 count, rfChar** out, rfUint32* out_size);
 
+
+
+
 /**
  * @brief add_protocol_settings_for_cmd - Adding custom protocol settings for a
  * specific command
@@ -437,6 +440,24 @@ API_EXPORT uint8_t receive_data_from_scanner_periphery(
 API_EXPORT uint8_t add_protocol_settings_for_cmd(
         scanner_base_t *device, const char* cmd_name, rfUint8 crc_enabled,
         rfUint8 confirm_enabled, rfUint8 one_answ, rfUint32 waiting_time, rfUint32 resends_count);
+
+/**
+ * @brief send_custom_command_to_scanner - Send custom command to device.
+ * @details Use the add_protocol_settings_for_cmd method to add specific before
+ *
+ * @param device Ptr to scanner
+ * @param cmd_name Command name
+ * @param data_type Data type
+ * @param in Data to be sent.
+ * @param in_size Data size to be sent
+ * @param out Data to be received
+ * @param out_size Data size to be received.
+ *
+ * @return true on seccess, else false.
+ */
+API_EXPORT uint8_t send_custom_command_to_scanner(
+        scanner_base_t *device, const rfChar* cmd_name, const rfChar* data_type,
+        rfChar* in, rfUint32 in_size, rfChar** out, rfUint32* out_size);
 
 /**
  * @brief remove_protocol_settings_for_cmd - Clear custom protocol settings for a

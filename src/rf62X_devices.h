@@ -562,6 +562,22 @@ rfBool rf627_smart_receive_from_periphery_by_service_protocol(
         rf627_smart_t* scanner, const rfChar* device_name,
         rfUint16 count, char** answ, rfUint32* answ_size, rfUint32 timeout);
 
+/**
+ * @brief rf627_smart_send_custom_command - Send custom command.
+ *
+ * @param scanner Ptr to scanner
+ * @param cmd_name Command name
+ * @param data_type Data type to be sent
+ * @param payload Data to be sent
+ * @param payload_size Data size to be sent
+ * @param out Data to be received
+ * @param out_size Data size to be received
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_send_custom_command(
+        rf627_smart_t* scanner, const rfChar* cmd_name, const rfChar* data_type,
+        rfChar* payload, uint32_t payload_size, rfChar** out, rfUint32* out_size);
 
 /**
  * @brief rf627_smart_save_calibration_data_by_service_protocol - Get
