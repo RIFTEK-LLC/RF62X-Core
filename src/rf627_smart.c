@@ -559,7 +559,7 @@ rfBool rf627_smart_connect(rf627_smart_t* scanner)
 
     char* config = generate_config_string(
                 host_device_uid,
-                "127.0.0.1",//scanner->info_by_service_protocol.user_network_hostIP,
+                "0.0.0.0",//scanner->info_by_service_protocol.user_network_hostIP,
                 scanner->info_by_service_protocol.user_network_ip,
                 host_udp_port,
                 scanner->info_by_service_protocol.user_network_servicePort, socket_timeout,
@@ -584,7 +584,8 @@ rfBool rf627_smart_connect(rf627_smart_t* scanner)
             recv_port = scanner->info_by_service_protocol.user_network_hostPort;
 
             //recv_addr.sin_addr = RF_INADDR_ANY;
-            ip_string_to_uint32(scanner->info_by_service_protocol.user_network_hostIP, &recv_ip_addr);
+            //ip_string_to_uint32(scanner->info_by_service_protocol.user_network_hostIP, &recv_ip_addr);
+            recv_ip_addr = 0;
 
             nret = network_platform.network_methods.socket_bind(
                         scanner->m_data_sock, recv_ip_addr, recv_port);
