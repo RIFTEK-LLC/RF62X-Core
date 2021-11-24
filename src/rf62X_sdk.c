@@ -370,6 +370,7 @@ rf627_profile2D_t* get_profile2D_from_scanner(
                     //recv_addr.sin_addr = RF_INADDR_ANY;
                     ip_string_to_uint32(((scanner_base_t*)device)->rf627_smart->
                                         info_by_service_protocol.user_network_hostIP, &recv_ip_addr);
+                    recv_ip_addr = 0;
 
                     nret = network_platform.network_methods.socket_bind(
                                 ((scanner_base_t*)device)->rf627_smart->m_data_sock, recv_ip_addr, recv_port);
