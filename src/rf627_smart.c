@@ -5503,6 +5503,34 @@ rfBool rf627_smart_set_authorization_key_by_service_protocol(rf627_smart_t* scan
 }
 
 
+rfBool rf627_smart_create_calibration_table(rf627_smart_t* scanner, rfUint32 timeout)
+{
+    if (scanner->calib_table.m_Data != NULL)
+        free(scanner->calib_table.m_Data);
+
+    scanner->calib_table.m_Data = NULL;
+    scanner->calib_table.m_DataSize = 0;
+
+    scanner->calib_table.m_Type = 0x05;
+
+    scanner->calib_table.m_Serial = scanner->info_by_service_protocol.fact_general_serial;
+    scanner->calib_table.m_DataRowLength = 8192;
+    scanner->calib_table.m_Width = rf627_smart_get_parameter(
+                scanner, "fact_sensor_width")->val_uint32->value;
+    scanner->calib_table.m_Height = rf627_smart_get_parameter(
+                scanner, "fact_sensor_height")->val_uint32->value;
+
+
+    scanner->calib_table.m_MultW = 1;
+    scanner->calib_table.m_MultH = 2;
+
+    scanner->calib_table.m_TimeStamp = time(NULL);
+
+    scanner->calib_table.m_CRC16 = 0;
+
+    return TRUE;
+}
+
 //
 // RF627-Smart (v2.x.x)
 // Read Calibration Data Method (TODO Parse Type)

@@ -1328,7 +1328,24 @@ rfUint8 set_authorization_key_to_scanner(scanner_base_t *device, char *key, uint
     return 0;
 }
 
-rfBool read_calibration_table_from_scanner(
+rfUint8 create_calibration_table_for_scanner(
+        scanner_base_t *device, uint32_t timeout)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE;
+    case kRF627_SMART:
+        rfBool status = FALSE;
+        status = rf627_smart_create_calibration_table(device->rf627_smart, timeout);
+        return status;
+    default:
+        return 2; // Unknown device type
+        break;
+    }
+    return 0;
+}
+
+rfUint8 read_calibration_table_from_scanner(
         scanner_base_t *device, uint32_t timeout, protocol_types_t protocol)
 {
     switch (device->type) {

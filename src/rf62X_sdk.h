@@ -304,6 +304,17 @@ API_EXPORT rfUint8 set_authorization_key_to_scanner(
         scanner_base_t *device, char* key, uint32_t key_size,
         uint32_t timeout, protocol_types_t protocol);
 
+
+/**
+ * @brief create_calibration_table_for_scanner - Create calibration table
+ * for scanner
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 create_calibration_table_for_scanner(
+        scanner_base_t *device, uint32_t timeout);
+
 /**
  * @brief read_calibration_table_from_scanner - Read calibration table
  * from scanner

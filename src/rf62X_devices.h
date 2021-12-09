@@ -490,6 +490,18 @@ rfBool rf627_smart_set_authorization_key_by_service_protocol(
 
 
 /**
+ * @brief rf627_smart_create_calibration_table - Create calibration table
+ * for scanner to SDK internal memory
+ *
+ * @param scanner - ptr to scanner
+ * @param timeout to read
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_create_calibration_table(
+        rf627_smart_t* scanner, rfUint32 timeout);
+
+/**
  * @brief rf627_smart_read_calibration_table_by_service_protocol - Read
  * calibration table from scanner to SDK internal memory
  *
