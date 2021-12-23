@@ -1335,9 +1335,11 @@ rfUint8 create_calibration_table_for_scanner(
     case kRF627_OLD:
         return FALSE;
     case kRF627_SMART:
+    {
         rfBool status = FALSE;
         status = rf627_smart_create_calibration_table(device->rf627_smart, timeout);
         return status;
+    }
     default:
         return 2; // Unknown device type
         break;
