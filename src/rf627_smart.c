@@ -6981,15 +6981,19 @@ rfBool rf627_smart_send_to_periphery_by_service_protocol(
     // {
     //    interface: String
     //    payload: blob,
+    //    wait_answer: bool,
     //    answer_timeout: number (uint32_t)
     // }
-    mpack_start_map(&writer, 3);
+    mpack_start_map(&writer, 4);
     {
         mpack_write_cstr(&writer, "interface");
         mpack_write_cstr(&writer, device_name);
 
         mpack_write_cstr(&writer, "payload");
         mpack_write_bin(&writer, in, in_size);
+
+        mpack_write_cstr(&writer, "wait_answer");
+        mpack_write_bool(&writer, timeout > 0 ? TRUE : FALSE);
 
         mpack_write_cstr(&writer, "answer_timeout");
         mpack_write_uint(&writer, timeout*1000);
