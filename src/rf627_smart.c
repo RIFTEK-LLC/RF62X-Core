@@ -7093,21 +7093,24 @@ rfBool rf627_smart_send_to_periphery_by_service_protocol(
                       "Get response to request! "
                       "Response status: ",((answer*)result)->result);
 
-                if(rf_strcmp(answ->out.result, "RF_OK") == 0)
+                if (answ->out.status == TRUE)
                 {
-                    (*out) = calloc(1, answ->out.payload_size);
-                    *out_size = answ->out.payload_size;
-                    memcpy((*out), answ->out.payload, answ->out.payload_size);
-                }
-                else
-                {
-                    if (timeout > 0)
+                    if(rf_strcmp(answ->out.result, "RF_OK") == 0)
                     {
-                        status = FALSE;
-                        TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,
-                              "%s%s\n",
-                              "Get response to request! "
-                              "Response status: ",((answer*)result)->out.result);
+                        (*out) = calloc(1, answ->out.payload_size);
+                        *out_size = answ->out.payload_size;
+                        memcpy((*out), answ->out.payload, answ->out.payload_size);
+                    }
+                    else
+                    {
+                        if (timeout > 0)
+                        {
+                            status = FALSE;
+                            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,
+                                  "%s%s\n",
+                                  "Get response to request! "
+                                  "Response status: ",((answer*)result)->out.result);
+                        }
                     }
                 }
             }
