@@ -872,6 +872,18 @@ rfUint8 rf627_smart_set_parameter(rf627_smart_t* scanner, parameter_t* param)
                 p->is_changed = TRUE;
                 return TRUE;
             }
+            else if (rf_strcmp(p->base.type, "i32_arr_t") == 0)
+            {
+                memory_platform.rf_free(p->arr_int32->value);
+                p->arr_uint32->value = memory_platform.rf_calloc(param->base.size, sizeof (uint8_t));
+                memory_platform.rf_memcpy(
+                            (void*)p->arr_int32->value,
+                            param->arr_int32->value,
+                            param->base.size);
+                p->base.size = param->base.size;
+                p->is_changed = TRUE;
+                return TRUE;
+            }
 
         }
     }
@@ -5324,19 +5336,29 @@ rfInt8 rf627_smart_set_authorization_key_callback(char* data, uint32_t data_size
         }answer;
 
         mpack_node_t root = mpack_tree_root(&tree);
-        mpack_node_t result_data = mpack_node_map_cstr(root, "result");
-        uint32_t result_size = (rfUint32)mpack_node_strlen(result_data) + 1;
-        mpack_node_t status_data = mpack_node_map_cstr(root, "status");
-
-        if (msg->result == NULL)
+        if (mpack_node_map_contains_cstr(root, "result"))
         {
-            msg->result = calloc(1, sizeof (answer));
+            if (msg->result == NULL)
+            {
+                msg->result = calloc(1, sizeof (answer));
+            }
+            answer* answ =  (answer*)msg->result;
+
+            mpack_node_t result_data = mpack_node_map_cstr(root, "result");
+            uint32_t result_size = (rfUint32)mpack_node_strlen(result_data) + 1;
+            answ->result = mpack_node_cstr_alloc(result_data, result_size);
+
+            char* a = answ->result;
+
+            if (mpack_node_map_contains_cstr(root, "status"))
+            {
+                mpack_node_t status_data = mpack_node_map_cstr(root, "status");
+                answ->status = mpack_node_u32(status_data);
+            }else
+                answ->status = FALSE;
+
+            status = TRUE;
         }
-
-        ((answer*)msg->result)->result = mpack_node_cstr_alloc(result_data, result_size);
-        ((answer*)msg->result)->status = mpack_node_u32(status_data);
-
-        status = TRUE;
     }
 
     mpack_tree_destroy(&tree);
