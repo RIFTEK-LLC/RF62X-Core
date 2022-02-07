@@ -306,6 +306,7 @@ void rf627_smart_free(rf627_smart_t* scanner)
                 }
 
                 vector_delete(search_history, i);
+                break;
             }
         }
     }
