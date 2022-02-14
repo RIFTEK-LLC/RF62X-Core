@@ -5737,6 +5737,31 @@ rfInt8 rf627_smart_read_calibration_data_free_result_callback(void* rqst_msg)
 }
 rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* scanner, rfUint32 timeout)
 {
+
+    if (scanner->calib_table.m_Data != NULL)
+        free(scanner->calib_table.m_Data);
+
+    scanner->calib_table.m_Data = NULL;
+    scanner->calib_table.m_DataSize = 0;
+
+    scanner->calib_table.m_Type = 0x05;
+
+    scanner->calib_table.m_Serial = scanner->info_by_service_protocol.fact_general_serial;
+    scanner->calib_table.m_DataRowLength = 8192;
+    scanner->calib_table.m_Width = rf627_smart_get_parameter(
+                scanner, "fact_sensor_width")->val_uint32->value;
+    scanner->calib_table.m_Height = rf627_smart_get_parameter(
+                scanner, "fact_sensor_height")->val_uint32->value;
+
+
+    scanner->calib_table.m_MultW = 1;
+    scanner->calib_table.m_MultH = 2;
+
+    scanner->calib_table.m_TimeStamp = time(NULL);
+
+    scanner->calib_table.m_CRC16 = 0;
+    return TRUE;
+
     // cmd_name - this is logical port/path where data will be send
     char* cmd_name                      = "GET_CALIBRATION_INFO";
     // payload - this is the data to be sent and their size
