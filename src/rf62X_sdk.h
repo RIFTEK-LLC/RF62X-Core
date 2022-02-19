@@ -431,6 +431,14 @@ API_EXPORT uint8_t receive_data_from_scanner_periphery(
         scanner_base_t *device, const rfChar* iface_name, rfUint32 timeout,
         rfUint16 count, rfChar** out, rfUint32* out_size);
 
+/**
+ * @brief receive_data_from_scanner_periphery - The CMOS-sensor will restart
+ * @param[in] device Ptr to scanner
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT uint8_t receive_firmware_from_scanner(
+        scanner_base_t *device, rfUint32 timeout, rfChar** out, rfUint32* out_size);
 
 
 

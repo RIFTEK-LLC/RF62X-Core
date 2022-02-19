@@ -646,6 +646,24 @@ rfBool rf627_smart_add_protocol_settings_for_cmd(
 rfBool rf627_smart_remove_protocol_settings_for_cmd(
         rf627_smart_t *scanner, const char *cmd_name);
 
+
+/**
+ * @brief rf627_smart_send_to_periphery_by_service_protocol - Send data
+ * to periphery
+ *
+ * @param scanner Ptr to scanner
+ * @param device_name Interface where the data will be sent. e.x. "usart0"
+ * @param data Data to be sent
+ * @param data_size Size of data
+ * @param answ Answer to sent data
+ * @param answ_size Answer data size
+ * @param timeout to send and receive answer
+ * @return true on success
+ */
+rfBool rf627_smart_receive_firmware_by_service_protocol(
+        rf627_smart_t* scanner, char** answ, rfUint32* answ_size, rfUint32 timeout);
+
+
 typedef struct
 {
     scanner_types_t type;

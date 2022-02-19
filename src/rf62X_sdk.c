@@ -1977,3 +1977,15 @@ uint8_t remove_protocol_settings_for_cmd(
     }
     return FALSE;
 }
+
+uint8_t receive_firmware_from_scanner(scanner_base_t *device, rfUint32 timeout, rfChar **out, rfUint32 *out_size)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE;
+    case kRF627_SMART:
+        return rf627_smart_receive_firmware_by_service_protocol(
+                    device->rf627_smart, out, out_size, timeout);
+    }
+    return FALSE;
+}
