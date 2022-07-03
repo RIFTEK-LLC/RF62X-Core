@@ -571,6 +571,22 @@ typedef struct
 
 typedef struct
 {
+    rfUint32 version;
+    rfUint32 crc_x;
+    rfUint32 crc_z;
+    rfUint32 serial;
+    rfUint32 width;
+    rfUint32 height;
+    rfFloat scaling_factor;
+    rfUint32 polynomial_degree_x;
+    rfUint32 polynomial_degree_z;
+    rfUint32 time_stamp;
+    float* poly_coef_x;
+    float* poly_coef_z;
+}rf627_smart_approx_table_v6_t;
+
+typedef struct
+{
     rfChar* device_name;
     rfUint32 serial_number;
     rfUint8 ip_address[4];
@@ -887,6 +903,14 @@ typedef struct
         rf627_smart_calib_table_t* rf627smart_calib_table;
     };
 }rf627_calib_table_t;
+
+typedef struct
+{
+    rfUint32 version;
+    union{
+        rf627_smart_approx_table_v6_t* table_v6;
+    };
+}rf627_approx_table_t;
 
 /*! Structure to store a profile
  */

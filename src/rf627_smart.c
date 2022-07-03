@@ -37,6 +37,8 @@ rf627_smart_t* rf627_smart_create_from_hello_msg(char* data, rfUint32 data_size)
     rf627_smart_t* rf627_smart = memory_platform.rf_calloc(1, sizeof (rf627_smart_t));
     memset(rf627_smart, 0, sizeof (rf627_smart_t));
     rf627_smart->is_connected = FALSE;
+    rf627_smart->calib_table.m_Data = NULL;
+    rf627_smart->approx_table.table_v6 = NULL;
     vector_init(&rf627_smart->params_list);
     vector_init(&rf627_smart->protocol_settings_list);
     pthread_mutex_init(&rf627_smart->protocol_settings_mutex, NULL);
@@ -5525,40 +5527,11 @@ rfBool rf627_smart_set_authorization_key_by_service_protocol(rf627_smart_t* scan
     return status;
 }
 
-
-rfBool rf627_smart_create_calibration_table(rf627_smart_t* scanner, rfUint32 timeout)
-{
-    if (scanner->calib_table.m_Data != NULL)
-        free(scanner->calib_table.m_Data);
-
-    scanner->calib_table.m_Data = NULL;
-    scanner->calib_table.m_DataSize = 0;
-
-    scanner->calib_table.m_Type = 0x05;
-
-    scanner->calib_table.m_Serial = scanner->info_by_service_protocol.fact_general_serial;
-    scanner->calib_table.m_DataRowLength = 8192;
-    scanner->calib_table.m_Width = rf627_smart_get_parameter(
-                scanner, "fact_sensor_width")->val_uint32->value;
-    scanner->calib_table.m_Height = rf627_smart_get_parameter(
-                scanner, "fact_sensor_height")->val_uint32->value;
-
-
-    scanner->calib_table.m_MultW = 1;
-    scanner->calib_table.m_MultH = 2;
-
-    scanner->calib_table.m_TimeStamp = time(NULL);
-
-    scanner->calib_table.m_CRC16 = 0;
-
-    return TRUE;
-}
-
 //
 // RF627-Smart (v2.x.x)
 // Read Calibration Data Method (TODO Parse Type)
 //
-rfInt8 rf627_smart_read_calibration_data_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+rfInt8 rf627_smart_read_calibration_table_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
 {
     answ_count++;
     RF62X_msg_t* msg = rqst_msg;
@@ -5680,7 +5653,7 @@ rfInt8 rf627_smart_read_calibration_data_callback(char* data, uint32_t data_size
     mpack_tree_destroy(&tree);
     return status;
 }
-rfInt8 rf627_smart_read_calibration_data_timeout_callback(void* rqst_msg)
+rfInt8 rf627_smart_read_calibration_table_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
@@ -5690,7 +5663,7 @@ rfInt8 rf627_smart_read_calibration_data_timeout_callback(void* rqst_msg)
 
     return TRUE;
 }
-rfInt8 rf627_smart_read_calibration_data_free_result_callback(void* rqst_msg)
+rfInt8 rf627_smart_read_calibration_table_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
@@ -5775,9 +5748,9 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
     uint32_t waiting_time               = timeout; // ms
     uint32_t resends                    = is_confirmation ? 3 : 0;
     // callbacks for request
-    RF62X_answ_callback answ_clb        = rf627_smart_read_calibration_data_callback;
-    RF62X_timeout_callback timeout_clb  = rf627_smart_read_calibration_data_timeout_callback;
-    RF62X_free_callback free_clb        = rf627_smart_read_calibration_data_free_result_callback;
+    RF62X_answ_callback answ_clb        = rf627_smart_read_calibration_table_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_read_calibration_table_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_read_calibration_table_free_result_callback;
 
     rf627_smart_protocol_cmd_settings_t* p = NULL;
     pthread_mutex_lock(&scanner->protocol_settings_mutex);
@@ -5922,7 +5895,7 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(rf627_smart_t* sca
 // Write Calibration Data Method
 //
 extern uint16_t crc16(const uint8_t *data, uint32_t len);
-rfInt8 rf627_smart_write_calibration_data_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+rfInt8 rf627_smart_write_calibration_table_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
 {
     answ_count++;
     RF62X_msg_t* msg = rqst_msg;
@@ -5989,7 +5962,7 @@ rfInt8 rf627_smart_write_calibration_data_callback(char* data, uint32_t data_siz
     mpack_tree_destroy(&tree);
     return status;
 }
-rfInt8 rf627_smart_write_calibration_data_timeout_callback(void* rqst_msg)
+rfInt8 rf627_smart_write_calibration_table_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
@@ -5999,7 +5972,7 @@ rfInt8 rf627_smart_write_calibration_data_timeout_callback(void* rqst_msg)
 
     return TRUE;
 }
-rfInt8 rf627_smart_write_calibration_data_free_result_callback(void* rqst_msg)
+rfInt8 rf627_smart_write_calibration_table_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
@@ -6029,7 +6002,7 @@ rfInt8 rf627_smart_write_calibration_data_free_result_callback(void* rqst_msg)
 
     return TRUE;
 }
-rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* scanner, rfUint32 timeout)
+rfBool rf627_smart_write_calibration_table_by_service_protocol(rf627_smart_t* scanner, rfUint32 timeout)
 {
     // Create payload
     mpack_writer_t writer;
@@ -6134,9 +6107,9 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
     uint32_t waiting_time               = timeout; // ms
     uint32_t resends                    = is_confirmation ? 3 : 0;
     // callbacks for request
-    RF62X_answ_callback answ_clb        = rf627_smart_write_calibration_data_callback;
-    RF62X_timeout_callback timeout_clb  = rf627_smart_write_calibration_data_timeout_callback;
-    RF62X_free_callback free_clb        = rf627_smart_write_calibration_data_free_result_callback;
+    RF62X_answ_callback answ_clb        = rf627_smart_write_calibration_table_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_write_calibration_table_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_write_calibration_table_free_result_callback;
 
     rf627_smart_protocol_cmd_settings_t* p = NULL;
     pthread_mutex_lock(&scanner->protocol_settings_mutex);
@@ -6219,7 +6192,7 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(rf627_smart_t* sca
 // RF627-Smart (v2.x.x)
 // Save Calibration Data Method
 //
-rfInt8 rf627_smart_save_calibration_data_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+rfInt8 rf627_smart_save_calibration_table_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
 {
     answ_count++;
     RF62X_msg_t* msg = rqst_msg;
@@ -6286,7 +6259,7 @@ rfInt8 rf627_smart_save_calibration_data_callback(char* data, uint32_t data_size
     mpack_tree_destroy(&tree);
     return status;
 }
-rfInt8 rf627_smart_save_calibration_data_timeout_callback(void* rqst_msg)
+rfInt8 rf627_smart_save_calibration_table_timeout_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
@@ -6296,7 +6269,7 @@ rfInt8 rf627_smart_save_calibration_data_timeout_callback(void* rqst_msg)
 
     return TRUE;
 }
-rfInt8 rf627_smart_save_calibration_data_free_result_callback(void* rqst_msg)
+rfInt8 rf627_smart_save_calibration_table_free_result_callback(void* rqst_msg)
 {
     RF62X_msg_t* msg = rqst_msg;
 
@@ -6326,7 +6299,7 @@ rfInt8 rf627_smart_save_calibration_data_free_result_callback(void* rqst_msg)
 
     return TRUE;
 }
-rfBool rf627_smart_save_calibration_data_by_service_protocol(rf627_smart_t* scanner, rfUint32 timeout)
+rfBool rf627_smart_save_calibration_table_by_service_protocol(rf627_smart_t* scanner, rfUint32 timeout)
 {
     // cmd_name - this is logical port/path where data will be send
     char* cmd_name                      = "SAVE_CALIBRATION_DATA";
@@ -6341,9 +6314,9 @@ rfBool rf627_smart_save_calibration_data_by_service_protocol(rf627_smart_t* scan
     uint32_t waiting_time               = timeout; // ms
     uint32_t resends                    = is_confirmation ? 3 : 0;
     // callbacks for request
-    RF62X_answ_callback answ_clb        = rf627_smart_save_calibration_data_callback;
-    RF62X_timeout_callback timeout_clb  = rf627_smart_save_calibration_data_timeout_callback;
-    RF62X_free_callback free_clb        = rf627_smart_save_calibration_data_free_result_callback;
+    RF62X_answ_callback answ_clb        = rf627_smart_save_calibration_table_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_save_calibration_table_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_save_calibration_table_free_result_callback;
 
     rf627_smart_protocol_cmd_settings_t* p = NULL;
     pthread_mutex_lock(&scanner->protocol_settings_mutex);
@@ -6417,6 +6390,833 @@ rfBool rf627_smart_save_calibration_data_by_service_protocol(rf627_smart_t* scan
     free(msg); msg = NULL;
     return status;
 }
+
+//
+// RF627-Smart (v2.x.x)
+// Read Approx Table v6 Method (TODO Parse Type)
+//
+rfInt8 rf627_smart_read_approx_table_v6_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+{
+    answ_count++;
+    RF62X_msg_t* msg = rqst_msg;
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+          msg->cmd_name, msg->_uid, data_size);
+
+    // Get response
+    mpack_tree_t tree;
+    mpack_tree_init_data(&tree, (const char*)data, data_size);
+    mpack_tree_parse(&tree);
+    if (mpack_tree_error(&tree) != mpack_ok)
+    {
+        status = FALSE;
+        mpack_tree_destroy(&tree);
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
+              "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+              msg->cmd_name, msg->_uid, data_size);
+        return status;
+    }
+
+    rfSize scanner_list_size = vector_count(search_history);
+    for (rfUint32 i = 0; i < scanner_list_size; i++)
+    {
+        scanner_base_t* scanner = (scanner_base_t*)vector_get(search_history, i);
+        if(scanner->type == kRF627_SMART)
+            if (scanner->rf627_smart->info_by_service_protocol.
+                    fact_general_serial == device_id)
+                existing = TRUE;
+    }
+
+    // If scanner exist
+    if (existing)
+    {
+        // Answer:
+        // {
+        //     result: String (*),
+        //     serial: Number (uint32_t),
+        //     data_row_length: Number (uint32_t),
+        //     width: Number (uint32_t),
+        //     height: Number (uint32_t),
+        //     mult_w: Number (uint32_t),
+        //     mult_h: Number (uint32_t),
+        //     time_stamp: Number (uint64_t)
+        // }
+        // * result: displays the result according to the response codes.
+        //           On successful execution "RF_OK".
+        typedef struct
+        {
+            char* result;
+
+            rfUint32 serial;
+            rfUint32 data_row_length;
+            rfUint32 width;
+            rfUint32 height;
+            rfUint32 mult_w;
+            rfUint32 mult_h;
+            rfInt time_stamp;
+        }answer;
+
+        mpack_node_t root = mpack_tree_root(&tree);
+        if (mpack_node_map_contains_cstr(root, "result"))
+        {
+            if (msg->result == NULL)
+            {
+                msg->result = calloc(1, sizeof (answer));
+            }
+            answer* answ =  (answer*)msg->result;
+
+            mpack_node_t result_data = mpack_node_map_cstr(root, "result");
+            uint32_t result_size = (rfUint32)mpack_node_strlen(result_data) + 1;
+            answ->result = mpack_node_cstr_alloc(result_data, result_size);
+
+            if (rf_strcmp(answ->result, "RF_OK") == 0)
+            {
+                if (mpack_node_map_contains_cstr(root, "serial"))
+                {
+                    mpack_node_t serial = mpack_node_map_cstr(root, "serial");
+                    answ->serial = mpack_node_u32(serial);
+                }
+                if (mpack_node_map_contains_cstr(root, "data_row_length"))
+                {
+                    mpack_node_t data_row_length = mpack_node_map_cstr(root, "data_row_length");
+                    answ->data_row_length = mpack_node_u32(data_row_length);
+                }
+                if (mpack_node_map_contains_cstr(root, "width"))
+                {
+                    mpack_node_t width = mpack_node_map_cstr(root, "width");
+                    answ->width = mpack_node_u32(width);
+                }
+                if (mpack_node_map_contains_cstr(root, "height"))
+                {
+                    mpack_node_t height = mpack_node_map_cstr(root, "height");
+                    answ->height = mpack_node_u32(height);
+                }
+                if (mpack_node_map_contains_cstr(root, "mult_w"))
+                {
+                    mpack_node_t mult_w = mpack_node_map_cstr(root, "mult_w");
+                    answ->mult_w = mpack_node_u32(mult_w);
+                }
+                if (mpack_node_map_contains_cstr(root, "mult_h"))
+                {
+                    mpack_node_t mult_h = mpack_node_map_cstr(root, "mult_h");
+                    answ->mult_h = mpack_node_u32(mult_h);
+                }
+                if (mpack_node_map_contains_cstr(root, "time_stamp"))
+                {
+                    mpack_node_t time_stamp = mpack_node_map_cstr(root, "time_stamp");
+                    answ->time_stamp = mpack_node_i32(time_stamp);
+                }
+            }
+            status = TRUE;
+        }
+    }
+
+    mpack_tree_destroy(&tree);
+    return status;
+}
+rfInt8 rf627_smart_read_approx_table_v6_timeout_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    return TRUE;
+}
+rfInt8 rf627_smart_read_approx_table_v6_free_result_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    pthread_mutex_lock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+    if (msg->result != NULL)
+    {
+        // Answer:
+        // {
+        //     result: String (*),
+        //     serial: Number (uint32_t),
+        //     data_row_length: Number (uint32_t),
+        //     width: Number (uint32_t),
+        //     height: Number (uint32_t),
+        //     mult_w: Number (uint32_t),
+        //     mult_h: Number (uint32_t),
+        //     time_stamp: Number (uint64_t)
+        // }
+        // * result: displays the result according to the response codes.
+        //           On successful execution "RF_OK".
+        typedef struct
+        {
+            char* result;
+
+            rfUint32 serial;
+            rfUint32 data_row_length;
+            rfUint32 width;
+            rfUint32 height;
+            rfUint32 mult_w;
+            rfUint32 mult_h;
+            rfInt time_stamp;
+        }answer;
+
+        free(((answer*)msg->result)->result);
+        free(msg->result);
+        msg->result = NULL;
+    }
+    pthread_mutex_unlock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+
+    return TRUE;
+}
+rfBool rf627_smart_read_approx_table_v6_by_service_protocol(rf627_smart_t* scanner, rfUint32 timeout)
+{
+    return rf627_smart_create_approx_table_v6(scanner);
+
+    // cmd_name - this is logical port/path where data will be send
+    char* cmd_name                      = "GET_CALIBRATION_INFO";
+    // payload - this is the data to be sent and their size
+    char* payload                       = NULL;
+    uint32_t payload_size               = 0;
+    // data_type - this is the type of packaging of the sent data
+    char* data_type                     = "blob";  // mpack, json, blob..
+    uint8_t is_check_crc                = FALSE;   // check crc disabled
+    uint8_t is_confirmation             = FALSE;   // confirmation disabled
+    uint8_t is_one_answ                 = TRUE;    // wait only one answer
+    uint32_t waiting_time               = timeout; // ms
+    uint32_t resends                    = is_confirmation ? 3 : 0;
+    // callbacks for request
+    RF62X_answ_callback answ_clb        = rf627_smart_read_calibration_table_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_read_calibration_table_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_read_calibration_table_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
+    // Create request message
+    RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
+                                             is_check_crc, is_confirmation, is_one_answ,
+                                             waiting_time, resends,
+                                             answ_clb, timeout_clb, free_clb);
+
+    rfBool status = FALSE;
+    // Send msg
+    if (RF62X_channel_send_msg(&scanner->channel, msg))
+    {
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
+
+        // try to find answer to rqst
+        pthread_mutex_lock(msg->result_mutex);
+        void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+        if (result != NULL)
+        {
+            // Answer:
+            // {
+            //     result: String (*),
+            //     serial: Number (uint32_t),
+            //     data_row_len: Number (uint32_t),
+            //     width: Number (uint32_t),
+            //     height: Number (uint32_t),
+            //     mult_w: Number (uint32_t),
+            //     mult_h: Number (uint32_t),
+            //     time_stamp: Number (uint64_t)
+            // }
+            // * result: displays the result according to the response codes.
+            //           On successful execution "RF_OK".
+            typedef struct
+            {
+                char* result;
+
+                rfUint32 serial;
+                rfUint32 data_row_len;
+                rfUint32 width;
+                rfUint32 height;
+                rfUint32 mult_w;
+                rfUint32 mult_h;
+                rfInt time_stamp;
+            }answer;
+
+            answer* answ = (answer*)result;
+
+            if (rf_strcmp(answ->result, "RF_OK") == 0)
+            {
+                status = TRUE;
+                if (scanner->calib_table.m_Data != NULL)
+                    free(scanner->calib_table.m_Data);
+
+                scanner->calib_table.m_Data = NULL;
+                scanner->calib_table.m_DataSize = 0;
+
+                scanner->calib_table.m_Type = 0x05;
+
+                scanner->calib_table.m_Serial = answ->serial;
+                scanner->calib_table.m_DataRowLength = answ->data_row_len;
+                scanner->calib_table.m_Width = answ->width;
+                scanner->calib_table.m_Height = answ->height;
+
+                scanner->calib_table.m_MultW = answ->mult_w;
+                scanner->calib_table.m_MultH = answ->mult_h;
+
+                scanner->calib_table.m_TimeStamp = answ->time_stamp;
+
+                scanner->calib_table.m_CRC16 = 0;
+            }else
+            {
+                status = FALSE;
+            }
+
+            int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
+                  "%s%s\n",
+                  "Get response to request! "
+                  "Response status: ",((answer*)result)->result);
+
+        }else
+        {
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
+        }
+        pthread_mutex_unlock(msg->result_mutex);
+    }else
+    {
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
+    }
+
+    if (status == FALSE)
+    {
+        if (scanner->calib_table.m_Data != NULL)
+            free(scanner->calib_table.m_Data);
+
+        scanner->calib_table.m_Data = NULL;
+        scanner->calib_table.m_DataSize = 0;
+
+        scanner->calib_table.m_Type = 0x05;
+
+        scanner->calib_table.m_Serial = scanner->info_by_service_protocol.fact_general_serial;
+        scanner->calib_table.m_DataRowLength = 8192;
+        scanner->calib_table.m_Width = rf627_smart_get_parameter(
+                    scanner, "fact_sensor_width")->val_uint32->value;
+        scanner->calib_table.m_Height = rf627_smart_get_parameter(
+                    scanner, "fact_sensor_height")->val_uint32->value;
+
+
+        scanner->calib_table.m_MultW = 1;
+        scanner->calib_table.m_MultH = 2;
+
+        scanner->calib_table.m_TimeStamp = time(NULL);
+
+        scanner->calib_table.m_CRC16 = 0;
+    }
+
+    RF62X_cleanup_msg(msg);
+    free(msg); msg = NULL;
+    return status;
+}
+
+
+//
+// RF627-Smart (v2.x.x)
+// Write Approx Table v6 Method
+//
+rfInt8 rf627_smart_write_approx_table_v6_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+{
+    answ_count++;
+    RF62X_msg_t* msg = rqst_msg;
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+          msg->cmd_name, msg->_uid, data_size);
+
+    // Get response
+    mpack_tree_t tree;
+    mpack_tree_init_data(&tree, (const char*)data, data_size);
+    mpack_tree_parse(&tree);
+    if (mpack_tree_error(&tree) != mpack_ok)
+    {
+        status = FALSE;
+        mpack_tree_destroy(&tree);
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
+              "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+              msg->cmd_name, msg->_uid, data_size);
+        return status;
+    }
+
+    rfSize scanner_list_size = vector_count(search_history);
+    for (rfUint32 i = 0; i < scanner_list_size; i++)
+    {
+        scanner_base_t* scanner = (scanner_base_t*)vector_get(search_history, i);
+        if(scanner->type == kRF627_SMART)
+            if (scanner->rf627_smart->info_by_service_protocol.
+                    fact_general_serial == device_id)
+                existing = TRUE;
+    }
+
+    // If scanner exist
+    if (existing)
+    {
+        // Answer:
+        // {
+        //    result: String (*)
+        // }
+        // * result: displays the result according to the response codes.
+        //           On successful execution "RF_OK".
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        mpack_node_t root = mpack_tree_root(&tree);
+        mpack_node_t result_data = mpack_node_map_cstr(root, "result");
+        uint32_t result_size = mpack_node_strlen(result_data) + 1;
+
+        if (msg->result == NULL)
+        {
+            msg->result = calloc(1, sizeof (answer));
+        }
+
+        ((answer*)msg->result)->result =
+                mpack_node_cstr_alloc(result_data, result_size);
+
+        status = TRUE;
+    }
+
+    mpack_tree_destroy(&tree);
+    return status;
+}
+rfInt8 rf627_smart_write_approx_table_v6_timeout_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    return TRUE;
+}
+rfInt8 rf627_smart_write_approx_table_v6_free_result_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    pthread_mutex_lock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+    if (msg->result != NULL)
+    {
+        // Answer:
+        // {
+        //    result: String (*)
+        // }
+        // * result: displays the result according to the response codes.
+        //           On successful execution "RF_OK".
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        free(((answer*)msg->result)->result);
+        free(msg->result);
+        msg->result = NULL;
+    }
+    pthread_mutex_unlock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+
+    return TRUE;
+}
+rfBool rf627_smart_write_approx_table_v6_by_service_protocol(rf627_smart_t* scanner, rfUint32 timeout)
+{
+    // Create payload
+    mpack_writer_t writer;
+    char* buffer = NULL; //< A growing array for msg.
+    size_t buffer_size = 0;	//< Number of msg bytes.
+    mpack_writer_init_growable(&writer, &buffer, &buffer_size);
+
+    // payload: (mpack)
+    // {
+    //    version: Number (uint32_t)
+    //    crc_x: Number (uint32_t)
+    //    crc_z: Number (uint32_t)
+    //    serial: Number (uint32_t)
+    //    width: Number (uint32_t)
+    //    height: Number (uint32_t)
+    //    scaling_factor: Number (float)
+    //    polynomial_degree_x: Number (uint32_t)
+    //    polynomial_degree_z: Number (uint32_t)
+    //    time_stamp: Number (uint32_t)
+    //    poly_coef_x: blob
+    //    poly_coef_z: blob
+    // }
+
+    // Create body
+    mpack_start_map(&writer, 12);
+    {
+        mpack_write_cstr(&writer, "version");
+        mpack_write_uint(&writer, scanner->approx_table.table_v6->version);
+
+        mpack_write_cstr(&writer, "crc_x");
+        mpack_write_uint(&writer, scanner->approx_table.table_v6->crc_x);
+
+        mpack_write_cstr(&writer, "crc_z");
+        mpack_write_uint(&writer, scanner->approx_table.table_v6->crc_z);
+
+        mpack_write_cstr(&writer, "serial");
+        mpack_write_uint(&writer, scanner->approx_table.table_v6->serial);
+
+        mpack_write_cstr(&writer, "width");
+        mpack_write_uint(&writer, scanner->approx_table.table_v6->width);
+
+        mpack_write_cstr(&writer, "height");
+        mpack_write_uint(&writer, scanner->approx_table.table_v6->height);
+
+        mpack_write_cstr(&writer, "scaling_factor");
+        mpack_write_float(&writer, scanner->approx_table.table_v6->scaling_factor);
+
+        mpack_write_cstr(&writer, "polynomial_degree_x");
+        mpack_write_uint(&writer, scanner->approx_table.table_v6->polynomial_degree_x);
+
+        mpack_write_cstr(&writer, "polynomial_degree_z");
+        mpack_write_uint(&writer, scanner->approx_table.table_v6->polynomial_degree_z);
+
+        mpack_write_cstr(&writer, "time_stamp");
+        mpack_write_uint(&writer, scanner->approx_table.table_v6->time_stamp);
+
+        mpack_write_cstr(&writer, "poly_coef_x");
+        mpack_write_bin(&writer,
+                        (rfChar*)scanner->approx_table.table_v6->poly_coef_x,
+                        scanner->approx_table.table_v6->width *
+                        scanner->approx_table.table_v6->polynomial_degree_x *
+                        sizeof(rfFloat));
+
+        mpack_write_cstr(&writer, "poly_coef_z");
+        mpack_write_bin(&writer,
+                        (rfChar*)scanner->approx_table.table_v6->poly_coef_z,
+                        scanner->approx_table.table_v6->width *
+                        scanner->approx_table.table_v6->polynomial_degree_z *
+                        sizeof(rfFloat));
+
+    }mpack_finish_map(&writer);
+
+    // finish writing
+    if (mpack_writer_destroy(&writer) != mpack_ok) {
+        fprintf(stderr, "An error occurred encoding the data!\n");
+        return FALSE;
+    }
+
+    // cmd_name - this is logical port/path where data will be send
+    char* cmd_name                      = "SET_CALIBRATION_DATA";
+    // payload - this is the data to be sent and their size
+    char* payload                       = buffer;
+    uint32_t payload_size               = buffer_size;
+    // data_type - this is the type of packaging of the sent data
+    char* data_type                     = "blob";  // mpack, json, blob..
+    uint8_t is_check_crc                = TRUE;    // check crc disabled
+    uint8_t is_confirmation             = TRUE;    // confirmation disabled
+    uint8_t is_one_answ                 = TRUE;    // wait only one answer
+    uint32_t waiting_time               = timeout; // ms
+    uint32_t resends                    = is_confirmation ? 3 : 0;
+    // callbacks for request
+    RF62X_answ_callback answ_clb        = rf627_smart_write_approx_table_v6_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_write_approx_table_v6_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_write_approx_table_v6_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
+    // Create request message
+    RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
+                                             is_check_crc, is_confirmation, is_one_answ,
+                                             waiting_time, resends,
+                                             answ_clb, timeout_clb, free_clb);
+    // free memory of payload
+    free(payload);
+
+    rfBool status = FALSE;
+    // Send msg
+    if (RF62X_channel_send_msg(&scanner->channel, msg))
+    {
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
+
+        // try to find answer to rqst
+        pthread_mutex_lock(msg->result_mutex);
+        void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+        if (result != NULL)
+        {
+            // Answer:
+            // {
+            //    result: String (*)
+            // }
+            // * result: displays the result according to the response codes.
+            //           On successful execution "RF_OK".
+            typedef struct
+            {
+                char* result;
+            }answer;
+
+            if (rf_strcmp(((answer*)result)->result, "RF_OK") == 0)
+                status = TRUE;
+            else
+                status = FALSE;
+
+            int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
+                  "%s%s\n",
+                  "Get response to request! "
+                  "Response status: ",((answer*)result)->result);
+
+        }else
+        {
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
+        }
+        pthread_mutex_unlock(msg->result_mutex);
+    }
+    else
+    {
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
+    }
+
+    RF62X_cleanup_msg(msg);
+    free(msg); msg = NULL;
+    return status;
+}
+
+
+//
+// RF627-Smart (v2.x.x)
+// Save Approx Table v6 Method
+//
+rfInt8 rf627_smart_save_approx_table_v6_callback(char* data, uint32_t data_size, uint32_t device_id, void* rqst_msg)
+{
+    answ_count++;
+    RF62X_msg_t* msg = rqst_msg;
+    int32_t status = FALSE;
+    rfBool existing = FALSE;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "GET ANSWER to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+          msg->cmd_name, msg->_uid, data_size);
+
+    // Get response
+    mpack_tree_t tree;
+    mpack_tree_init_data(&tree, (const char*)data, data_size);
+    mpack_tree_parse(&tree);
+    if (mpack_tree_error(&tree) != mpack_ok)
+    {
+        status = FALSE;
+        mpack_tree_destroy(&tree);
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,
+              "PARSING ERROR to %s command, rqst-id: %" PRIu64 ", payload size: %d\n",
+              msg->cmd_name, msg->_uid, data_size);
+        return status;
+    }
+
+    rfSize scanner_list_size = vector_count(search_history);
+    for (rfUint32 i = 0; i < scanner_list_size; i++)
+    {
+        scanner_base_t* scanner = (scanner_base_t*)vector_get(search_history, i);
+        if(scanner->type == kRF627_SMART)
+            if (scanner->rf627_smart->info_by_service_protocol.
+                    fact_general_serial == device_id)
+                existing = TRUE;
+    }
+
+    // If scanner exist
+    if (existing)
+    {
+        // Answer:
+        // {
+        //    result: String (*)
+        // }
+        // * result: displays the result according to the response codes.
+        //           On successful execution "RF_OK".
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        mpack_node_t root = mpack_tree_root(&tree);
+        mpack_node_t result_data = mpack_node_map_cstr(root, "result");
+        uint32_t result_size = mpack_node_strlen(result_data) + 1;
+
+        if (msg->result == NULL)
+        {
+            msg->result = calloc(1, sizeof (answer));
+        }
+
+        ((answer*)msg->result)->result =
+                mpack_node_cstr_alloc(result_data, result_size);
+
+        status = TRUE;
+    }
+
+    mpack_tree_destroy(&tree);
+    return status;
+}
+rfInt8 rf627_smart_save_approx_table_v6_timeout_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "TIMEOUT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    return TRUE;
+}
+rfInt8 rf627_smart_save_approx_table_v6_free_result_callback(void* rqst_msg)
+{
+    RF62X_msg_t* msg = rqst_msg;
+
+    TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
+          "FREE RESULT to %s command, rqst-id: %" PRIu64 ".\n",
+          msg->cmd_name, msg->_uid);
+
+    pthread_mutex_lock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+    if (msg->result != NULL)
+    {
+        // Answer:
+        // {
+        //    result: String (*)
+        // }
+        // * result: displays the result according to the response codes.
+        //           On successful execution "RF_OK".
+        typedef struct
+        {
+            char* result;
+        }answer;
+
+        free(((answer*)msg->result)->result);
+        free(msg->result);
+        msg->result = NULL;
+    }
+    pthread_mutex_unlock(((RF62X_msg_t*)rqst_msg)->result_mutex);
+
+    return TRUE;
+}
+rfBool rf627_smart_save_approx_table_v6_by_service_protocol(rf627_smart_t* scanner, rfUint32 timeout)
+{
+    // cmd_name - this is logical port/path where data will be send
+    char* cmd_name                      = "SAVE_CALIBRATION_DATA";
+    // payload - this is the data to be sent and their size
+    char* payload                       = NULL;
+    uint32_t payload_size               = 0;
+    // data_type - this is the type of packaging of the sent data
+    char* data_type                     = "blob";  // mpack, json, blob..
+    uint8_t is_check_crc                = FALSE;   // check crc disabled
+    uint8_t is_confirmation             = FALSE;   // confirmation disabled
+    uint8_t is_one_answ                 = TRUE;    // wait only one answer
+    uint32_t waiting_time               = timeout; // ms
+    uint32_t resends                    = is_confirmation ? 3 : 0;
+    // callbacks for request
+    RF62X_answ_callback answ_clb        = rf627_smart_save_approx_table_v6_callback;
+    RF62X_timeout_callback timeout_clb  = rf627_smart_save_approx_table_v6_timeout_callback;
+    RF62X_free_callback free_clb        = rf627_smart_save_approx_table_v6_free_result_callback;
+
+    rf627_smart_protocol_cmd_settings_t* p = NULL;
+    pthread_mutex_lock(&scanner->protocol_settings_mutex);
+    for(rfSize i = 0; i < vector_count(scanner->protocol_settings_list); i++)
+    {
+        p = vector_get(scanner->protocol_settings_list, i);
+        if (rf_strcmp(p->cmd_name, cmd_name) == 0)
+        {
+            is_check_crc = p->is_check_crc;
+            is_confirmation = p->is_confirmation;
+            is_one_answ = p->is_one_answ;
+            waiting_time = p->waiting_time;
+            resends = is_confirmation ? p->resends_count : 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&scanner->protocol_settings_mutex);
+
+    // Create request message
+    RF62X_msg_t* msg = RF62X_create_rqst_msg(cmd_name, payload, payload_size, data_type,
+                                             is_check_crc, is_confirmation, is_one_answ,
+                                             waiting_time, resends,
+                                             answ_clb, timeout_clb, free_clb);
+
+    rfBool status = FALSE;
+    // Send msg
+    if (RF62X_channel_send_msg(&scanner->channel, msg))
+    {
+        TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,  "%s", "Request were sent.\n");
+
+        // try to find answer to rqst
+        pthread_mutex_lock(msg->result_mutex);
+        void* result = RF62X_find_result_to_rqst_msg(&scanner->channel, msg, waiting_time);
+        if (result != NULL)
+        {
+            // Answer:
+            // {
+            //    result: String (*)
+            // }
+            // * result: displays the result according to the response codes.
+            //           On successful execution "RF_OK".
+            typedef struct
+            {
+                char* result;
+            }answer;
+
+            if (rf_strcmp(((answer*)result)->result, "RF_OK") == 0)
+                status = TRUE;
+            else
+                status = FALSE;
+
+            int TRACE_LEVEL = status ? TRACE_LEVEL_DEBUG : TRACE_LEVEL_WARNING;
+            int TRACE_FORMAT = status ? TRACE_FORMAT_SHORT : TRACE_FORMAT_LONG;
+            TRACE(TRACE_LEVEL, TRACE_FORMAT,
+                  "%s%s\n",
+                  "Get response to request! "
+                  "Response status: ",((answer*)result)->result);
+
+        }else
+        {
+            TRACE(TRACE_LEVEL_WARNING, TRACE_FORMAT_LONG,  "%s", "No response to request!\n");
+        }
+        pthread_mutex_unlock(msg->result_mutex);
+    }
+    else
+    {
+        TRACE(TRACE_LEVEL_ERROR, TRACE_FORMAT_LONG,  "%s", "No data has been sent.\n");
+    }
+
+    RF62X_cleanup_msg(msg);
+    free(msg); msg = NULL;
+    return status;
+}
+
 
 
 //
@@ -7913,7 +8713,33 @@ rfBool rf627_smart_send_custom_command(
 
 
 
+rfBool rf627_smart_create_calibration_table(rf627_smart_t* scanner, rfUint32 timeout)
+{
+    if (scanner->calib_table.m_Data != NULL)
+        free(scanner->calib_table.m_Data);
 
+    scanner->calib_table.m_Data = NULL;
+    scanner->calib_table.m_DataSize = 0;
+
+    scanner->calib_table.m_Type = 0x05;
+
+    scanner->calib_table.m_Serial = scanner->info_by_service_protocol.fact_general_serial;
+    scanner->calib_table.m_DataRowLength = 8192;
+    scanner->calib_table.m_Width = rf627_smart_get_parameter(
+                scanner, "fact_sensor_width")->val_uint32->value;
+    scanner->calib_table.m_Height = rf627_smart_get_parameter(
+                scanner, "fact_sensor_height")->val_uint32->value;
+
+
+    scanner->calib_table.m_MultW = 1;
+    scanner->calib_table.m_MultH = 2;
+
+    scanner->calib_table.m_TimeStamp = time(NULL);
+
+    scanner->calib_table.m_CRC16 = 0;
+
+    return TRUE;
+}
 
 rf627_smart_calib_table_t* rf627_smart_get_calibration_table(rf627_smart_t* scanner)
 {
@@ -7954,6 +8780,103 @@ rfBool rf627_smart_set_calibration_table(rf627_smart_t* scanner, rf627_smart_cal
 
     return TRUE;
 }
+
+
+rfBool rf627_smart_create_approx_table_v6(rf627_smart_t* scanner)
+{
+    if (scanner->approx_table.table_v6 == NULL)
+    {
+        scanner->approx_table.version = 6;
+        scanner->approx_table.table_v6 = calloc(1, sizeof(rf627_smart_approx_table_v6_t));
+    }else
+    {
+        if (scanner->approx_table.table_v6->poly_coef_x != NULL)
+            free(scanner->approx_table.table_v6->poly_coef_x);
+        if (scanner->approx_table.table_v6->poly_coef_z != NULL)
+            free(scanner->approx_table.table_v6->poly_coef_z);
+    }
+    scanner->approx_table.table_v6->version = 0x06;
+    scanner->approx_table.table_v6->crc_x = 0;
+    scanner->approx_table.table_v6->crc_z = 0;
+    scanner->approx_table.table_v6->serial = scanner->info_by_service_protocol.fact_general_serial;
+    scanner->approx_table.table_v6->width = rf627_smart_get_parameter(
+                scanner, "fact_sensor_width")->val_uint32->value;
+    scanner->approx_table.table_v6->height = rf627_smart_get_parameter(
+                scanner, "fact_sensor_height")->val_uint32->value;
+    if (scanner->info_by_service_protocol.fact_general_mr < 100 && scanner->info_by_service_protocol.fact_general_xemr < 48)
+        scanner->approx_table.table_v6->scaling_factor = 0.001;
+    else if (scanner->info_by_service_protocol.fact_general_mr < 600 && scanner->info_by_service_protocol.fact_general_xemr < 500)
+        scanner->approx_table.table_v6->scaling_factor = 0.01;
+    else if (scanner->info_by_service_protocol.fact_general_mr < 1165 && scanner->info_by_service_protocol.fact_general_xemr < 1010)
+        scanner->approx_table.table_v6->scaling_factor = 0.1;
+    else
+        scanner->approx_table.table_v6->scaling_factor = 1.0;
+
+    scanner->approx_table.table_v6->polynomial_degree_x = 5;
+    scanner->approx_table.table_v6->polynomial_degree_z = 5;
+    scanner->approx_table.table_v6->time_stamp = time(NULL);
+
+    scanner->approx_table.table_v6->poly_coef_x = (rfFloat*)calloc(
+                scanner->approx_table.table_v6->width *
+                scanner->approx_table.table_v6->polynomial_degree_x,
+                sizeof (rfFloat));
+    scanner->approx_table.table_v6->poly_coef_z = (rfFloat*)calloc(
+                scanner->approx_table.table_v6->width *
+                scanner->approx_table.table_v6->polynomial_degree_z,
+                sizeof (rfFloat));
+
+    return TRUE;
+}
+
+rf627_smart_approx_table_v6_t* rf627_smart_get_approx_table_v6(rf627_smart_t* scanner)
+{
+    return scanner->approx_table.table_v6;
+}
+
+rfBool rf627_smart_set_approx_table_v6(rf627_smart_t* scanner, rf627_smart_approx_table_v6_t* table)
+{
+    if (scanner->approx_table.table_v6 == NULL)
+    {
+        scanner->approx_table.version = table->version;
+        scanner->approx_table.table_v6 = calloc(1, sizeof(rf627_smart_approx_table_v6_t));
+    }else
+    {
+        if (scanner->approx_table.table_v6->poly_coef_x != NULL)
+            free(scanner->approx_table.table_v6->poly_coef_x);
+        if (scanner->approx_table.table_v6->poly_coef_z != NULL)
+            free(scanner->approx_table.table_v6->poly_coef_z);
+    }
+    scanner->approx_table.table_v6->version = table->version;
+    scanner->approx_table.table_v6->crc_x = table->crc_x;
+    scanner->approx_table.table_v6->crc_z = table->crc_z;
+    scanner->approx_table.table_v6->serial = table->serial;
+    scanner->approx_table.table_v6->width = table->width;
+    scanner->approx_table.table_v6->height = table->height;
+    scanner->approx_table.table_v6->scaling_factor = table->scaling_factor;
+
+    scanner->approx_table.table_v6->polynomial_degree_x = table->polynomial_degree_x;
+    scanner->approx_table.table_v6->polynomial_degree_z = table->polynomial_degree_z;
+    scanner->approx_table.table_v6->time_stamp = table->time_stamp;
+
+    scanner->approx_table.table_v6->poly_coef_x = (rfFloat*)calloc(
+                scanner->approx_table.table_v6->width *
+                scanner->approx_table.table_v6->polynomial_degree_x,
+                sizeof (rfFloat));
+    memcpy(scanner->approx_table.table_v6->poly_coef_x, table->poly_coef_x,
+           scanner->approx_table.table_v6->width *
+           scanner->approx_table.table_v6->polynomial_degree_x * sizeof (rfFloat));
+    scanner->approx_table.table_v6->poly_coef_z = (rfFloat*)calloc(
+                scanner->approx_table.table_v6->width *
+                scanner->approx_table.table_v6->polynomial_degree_z,
+                sizeof (rfFloat));
+    memcpy(scanner->approx_table.table_v6->poly_coef_z, table->poly_coef_z,
+           scanner->approx_table.table_v6->width *
+           scanner->approx_table.table_v6->polynomial_degree_z * sizeof (rfFloat));
+
+    return TRUE;
+}
+
+
 
 rfBool rf627_smart_add_protocol_settings_for_cmd(
         rf627_smart_t *scanner, const char *cmd_name,

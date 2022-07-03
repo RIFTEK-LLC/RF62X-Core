@@ -393,6 +393,100 @@ API_EXPORT rfUint8 set_calibration_table_to_scanner(
 API_EXPORT rfUint8 save_calibration_table_to_scanner(
         scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
 
+
+
+
+/**
+ * @brief create_approximation_table_for_scanner - Create calibration table
+ * for scanner
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 create_approximation_table_for_scanner(scanner_base_t *device);
+
+/**
+ * @brief read_approximation_table_from_scanner - Read calibration table
+ * from scanner
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 read_approximation_table_from_scanner(
+        scanner_base_t *device, uint32_t timeout);
+
+/**
+ * @brief convert_approximation_table_from_bytes - Convert Calibration Table
+ * from bytes
+ * @param[in] bytes Ptr to byte array
+ * @param[in] data_size Size of byte array
+ * @return Ptr to rf627_approx_table_t
+ */
+API_EXPORT rfUint8 convert_approximation_table_from_bytes(
+        rf627_approx_table_t * table, char* bytes, uint32_t data_size);
+
+/**
+ * @brief convert_approximation_table_to_bytes - Convert Calibration Table
+ * to bytes
+ * @param[in] table Ptr to rf627_approx_table_t
+ * @param[out] bytes Returned byte array
+ * @param[out] data_size Size of returned byte array
+ * @return TRUE on success
+ */
+API_EXPORT rfBool convert_approximation_table_to_bytes(
+        rf627_approx_table_t* table, char** bytes, uint32_t* data_size);
+
+/**
+ * @brief write_approximation_table_to_scanner - Write calibration table
+ * to scanner
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 write_approximation_table_to_scanner(
+        scanner_base_t *device, uint32_t timeout);
+
+/**
+ * @brief get_approximation_table_from_scanner - Get calibration table from
+ * internal SDK memory
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return Ptr to rf627_approx_table_t
+ */
+API_EXPORT rf627_approx_table_t* get_approximation_table_from_scanner(
+        scanner_base_t *device, uint32_t timeout, protocol_types_t protocol);
+
+/**
+ * @brief set_approximation_table_to_scanner - Set calibration table to internal
+ * SDK memory
+ * @param[in] device Ptr to scanner
+ * @param[in] table Ptr to rf627_approx_table_t
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 set_approximation_table_to_scanner(
+        scanner_base_t *device, rf627_approx_table_t* table,
+        uint32_t timeout);
+
+/**
+ * @brief save_approximation_table_to_scanner - Save calibration table
+ * to device's memory
+ * @param[in] device Ptr to scanner
+ * @param[in] timeout Time to receive token
+ * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
+ * @return TRUE on success
+ */
+API_EXPORT rfUint8 save_approximation_table_to_scanner(
+        scanner_base_t *device, uint32_t timeout);
+
+
+
+
+
 /**
  * @brief send_reboot_device_request_to_scanner - The scanner will restart
  * @param[in] device Ptr to scanner

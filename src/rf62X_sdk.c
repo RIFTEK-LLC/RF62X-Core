@@ -1501,7 +1501,7 @@ rfUint8 write_calibration_table_to_scanner(scanner_base_t *device, uint32_t time
         case kSERVICE:
         {
             rfBool result = FALSE;
-            result = rf627_smart_write_calibration_data_by_service_protocol(device->rf627_smart, timeout);
+            result = rf627_smart_write_calibration_table_by_service_protocol(device->rf627_smart, timeout);
             return result;
         }
         case kETHERNET_IP:
@@ -1543,7 +1543,7 @@ rfUint8 save_calibration_table_to_scanner(scanner_base_t *device, uint32_t timeo
         case kSERVICE:
         {
             rfBool result = FALSE;
-            result = rf627_smart_save_calibration_data_by_service_protocol(device->rf627_smart, timeout);
+            result = rf627_smart_save_calibration_table_by_service_protocol(device->rf627_smart, timeout);
             return result;
         }
         case kETHERNET_IP:
@@ -1692,6 +1692,206 @@ rf627_calib_table_t *convert_calibration_table_from_bytes(char *bytes, uint32_t 
 
     return _table;
 }
+
+
+
+rfUint8 create_approximation_table_for_scanner(scanner_base_t *device)
+{
+    switch (device->type)
+    {
+    case kRF627_OLD:
+        return FALSE;
+    case kRF627_SMART:
+        return rf627_smart_create_approx_table_v6(device->rf627_smart);;
+    default:
+        return FALSE;
+    }
+    return FALSE;
+}
+
+rfUint8 read_approximation_table_from_scanner(scanner_base_t *device, uint32_t timeout)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE;
+    case kRF627_SMART:
+        return rf627_smart_read_approx_table_v6_by_service_protocol(device->rf627_smart, timeout);
+    default:
+        return FALSE; // Unknown device type
+    }
+    return FALSE;
+}
+
+rfUint8 convert_approximation_table_from_bytes(rf627_approx_table_t * maintable, char *bytes, uint32_t data_size)
+{
+    switch (maintable->version) {
+    case 6:
+    {
+        mpack_tree_t tree;
+        mpack_tree_init_data(&tree, (const char*)bytes, data_size);
+        mpack_tree_parse(&tree);
+        if (mpack_tree_error(&tree) != mpack_ok)
+        {
+            mpack_tree_destroy(&tree);
+            return FALSE;
+        }
+        mpack_node_t root = mpack_tree_root(&tree);
+
+        if (maintable->table_v6) {
+            if (maintable->table_v6->poly_coef_x)
+                free(maintable->table_v6->poly_coef_x);
+            if (maintable->table_v6->poly_coef_x)
+                free(maintable->table_v6->poly_coef_x);
+            free (maintable->table_v6);
+        }
+        maintable->table_v6 = calloc(1, sizeof (rf627_smart_approx_table_v6_t));
+        rf627_smart_approx_table_v6_t* table = maintable->table_v6;
+        table->version = mpack_node_uint(mpack_node_map_cstr(root, "version"));
+        table->crc_x = mpack_node_uint(mpack_node_map_cstr(root, "crc_x"));
+        table->crc_z = mpack_node_uint(mpack_node_map_cstr(root, "crc_z"));
+        table->serial = mpack_node_uint(mpack_node_map_cstr(root, "serial"));
+        table->width = mpack_node_uint(mpack_node_map_cstr(root, "width"));
+        table->height = mpack_node_uint(mpack_node_map_cstr(root, "height"));
+        table->scaling_factor = mpack_node_float(mpack_node_map_cstr(root, "scaling_factor"));
+        table->polynomial_degree_x = mpack_node_uint(mpack_node_map_cstr(root, "polynomial_degree_x"));
+        table->polynomial_degree_z = mpack_node_uint(mpack_node_map_cstr(root, "polynomial_degree_z"));
+        table->time_stamp = mpack_node_uint(mpack_node_map_cstr(root, "time_stamp"));
+        table->poly_coef_x = (float*)mpack_node_bin_data(mpack_node_map_cstr(root, "poly_coef_x"));
+        table->poly_coef_x = (float*)mpack_node_bin_data(mpack_node_map_cstr(root, "poly_coef_z"));
+        break;
+    }
+
+    }
+
+    return TRUE;
+}
+
+rfBool convert_approximation_table_to_bytes(rf627_approx_table_t *maintable, char **bytes, uint32_t *data_size)
+{
+    *data_size = 0;
+    switch (maintable->version) {
+    case 6:
+    {
+        rf627_smart_approx_table_v6_t* table = maintable->table_v6;
+
+        // Create calib_file
+        mpack_writer_t writer;
+        mpack_writer_init_growable(&writer, bytes, (size_t*)data_size);
+
+        // Идентификатор сообщения для подтверждения
+        mpack_start_map(&writer, 11);
+        {
+            mpack_write_cstr(&writer, "version");
+            mpack_write_uint(&writer, table->version);
+
+            mpack_write_cstr(&writer, "crc_x");
+            mpack_write_uint(&writer, table->crc_x);
+
+            mpack_write_cstr(&writer, "crc_z");
+            mpack_write_uint(&writer, table->crc_z);
+
+            mpack_write_cstr(&writer, "serial");
+            mpack_write_uint(&writer, table->serial);
+
+            mpack_write_cstr(&writer, "width");
+            mpack_write_uint(&writer, table->width);
+
+            mpack_write_cstr(&writer, "height");
+            mpack_write_uint(&writer, table->height);
+
+            mpack_write_cstr(&writer, "scaling_factor");
+            mpack_write_float(&writer, table->scaling_factor);
+
+            mpack_write_cstr(&writer, "polynomial_degree_x");
+            mpack_write_uint(&writer, table->polynomial_degree_x);
+
+            mpack_write_cstr(&writer, "polynomial_degree_z");
+            mpack_write_uint(&writer, table->polynomial_degree_z);
+
+            mpack_write_cstr(&writer, "poly_coef_x");
+            mpack_write_bin(&writer, (char*)table->poly_coef_x,
+                            table->polynomial_degree_x * sizeof (rfFloat)* table->width);
+
+            mpack_write_cstr(&writer, "poly_coef_z");
+            mpack_write_bin(&writer, (char*)table->poly_coef_z,
+                            table->polynomial_degree_z * sizeof (rfFloat)* table->width);
+        }mpack_finish_map(&writer);
+
+        // finish writing
+        if (mpack_writer_destroy(&writer) != mpack_ok) {
+            fprintf(stderr, "An error occurred encoding the data!\n");
+            return FALSE;
+        }
+        break;
+    }
+    default:
+        return FALSE;
+    }
+
+    return TRUE;
+
+
+}
+
+rfUint8 write_approximation_table_to_scanner(scanner_base_t *device, uint32_t timeout)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE; // Unknown protocol type
+    case kRF627_SMART:
+        return rf627_smart_write_approx_table_v6_by_service_protocol(device->rf627_smart, timeout);
+    default:
+        return FALSE; // Unknown device type
+        break;
+    }
+    return FALSE;
+}
+
+rf627_approx_table_t* get_approximation_table_from_scanner(scanner_base_t *device, uint32_t timeout, protocol_types_t protocol)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+         return NULL;
+    case kRF627_SMART:
+         return &device->rf627_smart->approx_table;
+    default:
+        return NULL; // Unknown device type
+        break;
+    }
+    return NULL;
+}
+
+rfUint8 set_approximation_table_to_scanner(scanner_base_t *device, rf627_approx_table_t *table, uint32_t timeout)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE; // Unknown protocol type
+    case kRF627_SMART:
+        device->rf627_smart->approx_table.version = table->version;
+        return rf627_smart_set_approx_table_v6(device->rf627_smart, table->table_v6);
+    default:
+        return FALSE; // Unknown device type
+        break;
+    }
+    return FALSE;
+}
+
+rfUint8 save_approximation_table_to_scanner(scanner_base_t *device, uint32_t timeout)
+{
+    switch (device->type) {
+    case kRF627_OLD:
+        return FALSE; // Unknown protocol type
+    case kRF627_SMART:
+        return rf627_smart_save_approx_table_v6_by_service_protocol(device->rf627_smart, timeout);
+    default:
+        return FALSE; // Unknown device type
+        break;
+    }
+    return FALSE;
+}
+
+
+
 
 void free_scanner(scanner_base_t *device)
 {

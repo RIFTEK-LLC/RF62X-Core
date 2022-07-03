@@ -214,6 +214,7 @@ typedef struct
 
     rf627_smart_hello_info_by_service_protocol info_by_service_protocol;
     rf627_smart_calib_table_t calib_table;
+    rf627_approx_table_t approx_table;
     rfBool is_connected;
     vector_t *protocol_settings_list;
     pthread_mutex_t protocol_settings_mutex;
@@ -502,6 +503,30 @@ rfBool rf627_smart_create_calibration_table(
         rf627_smart_t* scanner, rfUint32 timeout);
 
 /**
+ * @brief rf627_smart_save_calibration_data_by_service_protocol - Get
+ * calibration table from SDK internal memory
+ *
+ * @param scanner - ptr to scanner
+ *
+ * @return ptr to rf627_smart_calib_table_t on success, else - null
+ */
+rf627_smart_calib_table_t* rf627_smart_get_calibration_table(rf627_smart_t* scanner);
+
+
+/**
+ * @brief rf627_smart_save_calibration_data_by_service_protocol - Set
+ * calibration table to SDK internal memory for sending to the scanner via
+ * rf627_smart_write_calibration_data_by_service_protocol() function
+ *
+ * @param scanner - ptr to scanner
+ * @param rf627_smart_calib_table_t - ptr to table
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_set_calibration_table(
+        rf627_smart_t* scanner, rf627_smart_calib_table_t* table);
+
+/**
  * @brief rf627_smart_read_calibration_table_by_service_protocol - Read
  * calibration table from scanner to SDK internal memory
  *
@@ -523,7 +548,7 @@ rfBool rf627_smart_read_calibration_table_by_service_protocol(
  *
  * @return true on success
  */
-rfBool rf627_smart_write_calibration_data_by_service_protocol(
+rfBool rf627_smart_write_calibration_table_by_service_protocol(
         rf627_smart_t* scanner, rfUint32 timeout);
 
 
@@ -536,8 +561,84 @@ rfBool rf627_smart_write_calibration_data_by_service_protocol(
  *
  * @return true on success
  */
-rfBool rf627_smart_save_calibration_data_by_service_protocol(
+rfBool rf627_smart_save_calibration_table_by_service_protocol(
         rf627_smart_t* scanner, rfUint32 timeout);
+
+
+/**
+ * @brief rf627_smart_create_approx_table - Create calibration table
+ * for scanner to SDK internal memory
+ *
+ * @param scanner - ptr to scanner
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_create_approx_table_v6(rf627_smart_t* scanner);
+
+/**
+ * @brief rf627_smart_save_calibration_data_by_service_protocol - Get
+ * calibration table from SDK internal memory
+ *
+ * @param scanner - ptr to scanner
+ *
+ * @return ptr to rf627_smart_calib_table_t on success, else - null
+ */
+rf627_smart_approx_table_v6_t* rf627_smart_get_approx_table_v6(rf627_smart_t* scanner);
+
+
+/**
+ * @brief rf627_smart_save_calibration_data_by_service_protocol - Set
+ * calibration table to SDK internal memory for sending to the scanner via
+ * rf627_smart_write_calibration_data_by_service_protocol() function
+ *
+ * @param scanner - ptr to scanner
+ * @param rf627_smart_calib_table_t - ptr to table
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_set_approx_table_v6(
+        rf627_smart_t* scanner, rf627_smart_approx_table_v6_t* table);
+
+/**
+ * @brief rf627_smart_read_calibration_table_by_service_protocol - Read
+ * calibration table from scanner to SDK internal memory
+ *
+ * @param scanner - ptr to scanner
+ * @param timeout to read
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_read_approx_table_v6_by_service_protocol(
+        rf627_smart_t* scanner, rfUint32 timeout);
+
+
+
+/**
+ * @brief rf627_smart_write_calibration_data_by_service_protocol - Write
+ * calibration table from SDK internal memory to scanner
+ *
+ * @param scanner - ptr to scanner
+ * @param timeout to write
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_write_approx_table_v6_by_service_protocol(
+        rf627_smart_t* scanner, rfUint32 timeout);
+
+
+/**
+ * @brief rf627_smart_save_calibration_data_by_service_protocol - Save
+ * calibration table in scanner memory
+ *
+ * @param scanner - ptr to scanner
+ * @param timeout to save
+ *
+ * @return true on success
+ */
+rfBool rf627_smart_save_approx_table_v6_by_service_protocol(
+        rf627_smart_t* scanner, rfUint32 timeout);
+
+
 
 
 /**
@@ -591,29 +692,6 @@ rfBool rf627_smart_send_custom_command(
         rf627_smart_t* scanner, const rfChar* cmd_name, const rfChar* data_type,
         rfChar* payload, uint32_t payload_size, rfChar** out, rfUint32* out_size);
 
-/**
- * @brief rf627_smart_save_calibration_data_by_service_protocol - Get
- * calibration table from SDK internal memory
- *
- * @param scanner - ptr to scanner
- *
- * @return ptr to rf627_smart_calib_table_t on success, else - null
- */
-rf627_smart_calib_table_t* rf627_smart_get_calibration_table(rf627_smart_t* scanner);
-
-
-/**
- * @brief rf627_smart_save_calibration_data_by_service_protocol - Set
- * calibration table to SDK internal memory for sending to the scanner via
- * rf627_smart_write_calibration_data_by_service_protocol() function
- *
- * @param scanner - ptr to scanner
- * @param rf627_smart_calib_table_t - ptr to table
- *
- * @return true on success
- */
-rfBool rf627_smart_set_calibration_table(
-        rf627_smart_t* scanner, rf627_smart_calib_table_t* table);
 
 /**
  * @brief rf627_smart_add_protocol_settings_for_cmd - Adding custom protocol
