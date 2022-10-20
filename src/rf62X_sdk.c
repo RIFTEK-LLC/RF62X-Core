@@ -1688,6 +1688,13 @@ rf627_calib_table_t *convert_calibration_table_from_bytes(char *bytes, uint32_t 
             mpack_node_int(mpack_node_map_cstr(root, "time_stamp"));
 
     _table->rf627smart_calib_table->m_Data = calloc(_table->rf627smart_calib_table->m_DataSize, sizeof (char));
+
+//    if (_table->rf627smart_calib_table->m_Type == 0x04)
+//    {
+//        memcpy(_table->rf627smart_calib_table->m_Data, &bytes[8 + 8 + header_size + trail_size], _table->rf627smart_calib_table->m_DataSize);
+//    }else
+//    {
+//    }
     memcpy(_table->rf627smart_calib_table->m_Data, &bytes[8 + header_size + trail_size], _table->rf627smart_calib_table->m_DataSize);
 
     return _table;

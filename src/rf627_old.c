@@ -671,13 +671,13 @@ void rf627_old_free(rf627_old_t* scanner)
 
     if (scanner->info_by_service_protocol.device_name != NULL)
     {
-        free (scanner->info_by_service_protocol.device_name);
+        memory_platform.rf_free (scanner->info_by_service_protocol.device_name);
         scanner->info_by_service_protocol.device_name = NULL;
     }
 
     if (scanner != NULL)
     {
-        free (scanner);
+        memory_platform.rf_free (scanner);
         scanner = NULL;
     }
 }
