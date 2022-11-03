@@ -2198,6 +2198,8 @@ uint8_t receive_firmware_from_scanner(scanner_base_t *device, rfUint32 timeout, 
 
 rfBool convert_profile2D_to_bytes(rf627_profile2D_t *profile2D, char **bytes, uint32_t *data_size)
 {
+    uint32_t offset = 0;
+
     if (profile2D != NULL)
     {
         switch (profile2D->type) {
@@ -2233,7 +2235,6 @@ rfBool convert_profile2D_to_bytes(rf627_profile2D_t *profile2D, char **bytes, ui
             }
             *bytes = calloc(*data_size, sizeof (char));
 
-            int offset = 0;
             memory_platform.rf_memcpy(&(*bytes)[0], &profile2D->type, 1);
             offset+=1;
             memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.data_type, sizeof(profile->header.data_type));
@@ -2323,7 +2324,8 @@ rfBool convert_profile2D_to_bytes(rf627_profile2D_t *profile2D, char **bytes, ui
         }
     }
 
-    return TRUE;
+
+    return (*data_size == offset) ? TRUE : FALSE;
 }
 
 uint32_t convert_profile2D_from_bytes(rf627_profile2D_t* profile2D,
@@ -2382,14 +2384,14 @@ uint32_t convert_profile2D_from_bytes(rf627_profile2D_t* profile2D,
                 offset += sizeof(profile->profile_format.points_count);
                 profile->profile_format.points =
                         memory_platform.rf_calloc(profile->profile_format.points_count, sizeof (rf627_old_point2D_t));
-                memory_platform.rf_memset(profile->profile_format.points, &bytes[offset], profile->profile_format.points_count * 8);
+                memory_platform.rf_memcpy(profile->profile_format.points, &bytes[offset], profile->profile_format.points_count * 8);
                 offset += profile->profile_format.points_count * 8;
                 if (profile->header.flags & 0x01){
                     profile->intensity_count = *(rfUint32*)&bytes[offset];
                     offset += sizeof(profile->intensity_count);
                     profile->intensity =
                             memory_platform.rf_calloc(profile->intensity_count, sizeof (rfUint8));
-                    memory_platform.rf_memset(profile->intensity, &bytes[offset], profile->intensity_count);
+                    memory_platform.rf_memcpy(profile->intensity, &bytes[offset], profile->intensity_count);
                     offset += profile->intensity_count;
                 }
                 break;
@@ -2400,14 +2402,14 @@ uint32_t convert_profile2D_from_bytes(rf627_profile2D_t* profile2D,
                 offset += sizeof(profile->pixels_format.pixels_count);
                 profile->pixels_format.pixels =
                         memory_platform.rf_calloc(profile->pixels_format.pixels_count, sizeof (rfUint16));
-                memory_platform.rf_memset(profile->pixels_format.pixels, &bytes[offset], profile->pixels_format.pixels_count * 2);
+                memory_platform.rf_memcpy(profile->pixels_format.pixels, &bytes[offset], profile->pixels_format.pixels_count * 2);
                 offset += profile->pixels_format.pixels_count * 2;
                 if (profile->header.flags & 0x01){
                     profile->intensity_count = *(rfUint32*)&bytes[offset];
                     offset += sizeof(profile->intensity_count);
                     profile->intensity =
                             memory_platform.rf_calloc(profile->intensity_count, sizeof (rfUint8));
-                    memory_platform.rf_memset(profile->intensity, &bytes[offset], profile->intensity_count);
+                    memory_platform.rf_memcpy(profile->intensity, &bytes[offset], profile->intensity_count);
                     offset += profile->intensity_count;
                 }
                 break;
