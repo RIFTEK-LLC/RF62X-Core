@@ -126,6 +126,27 @@ API_EXPORT rf627_profile2D_t* get_profile2D_from_scanner(
         rfBool realtime, protocol_types_t protocol);
 
 /**
+ * @brief convert_calibration_table_to_bytes - Convert Calibration Table
+ * to bytes
+ * @param[in] table Ptr to rf627_calib_table_t
+ * @param[out] bytes Returned byte array
+ * @param[out] data_size Size of returned byte array
+ * @return TRUE on success
+ */
+API_EXPORT rfBool convert_profile2D_to_bytes(
+        rf627_profile2D_t* profile2D, char** bytes, uint32_t* data_size);
+
+/**
+ * @brief convert_calibration_table_from_bytes - Convert Calibration Table
+ * from bytes
+ * @param[in] bytes Ptr to byte array
+ * @param[in] data_size Size of byte array
+ * @return Ptr to rf627_calib_table_t
+ */
+API_EXPORT uint32_t convert_profile2D_from_bytes(rf627_profile2D_t* profile2D,
+        char* bytes, uint32_t data_size);
+
+/**
  * @brief send_profile2D_request_to_scanner - Command to start profiles
  * measuring.
  * @param[in] device Ptr to scanner
