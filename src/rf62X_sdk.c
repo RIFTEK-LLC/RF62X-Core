@@ -2285,33 +2285,35 @@ rfBool convert_profile2D_to_bytes(rf627_profile2D_t *profile2D, char **bytes, ui
             {
             case DTY_ProfileNormal:
             case DTY_ProfileInterpolated:
+            {
 
                 memory_platform.rf_memcpy(&(*bytes)[offset], &profile->profile_format.points_count, sizeof(profile->profile_format.points_count));
                 offset+=sizeof(profile->profile_format.points_count);
-                memory_platform.rf_memcpy(&(*bytes)[offset], &profile->profile_format.points, profile->profile_format.points_count * 8);
+                memory_platform.rf_memcpy(&(*bytes)[offset], profile->profile_format.points, profile->profile_format.points_count * 8);
                 offset+=profile->profile_format.points_count * 8;
                 if (profile->header.flags & 0x01){
                     memory_platform.rf_memcpy(&(*bytes)[offset], &profile->intensity_count, sizeof(profile->intensity_count));
                     offset+=sizeof(profile->intensity_count);
-                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile->intensity, profile->intensity_count);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], profile->intensity, profile->intensity_count);
                     offset+=profile->intensity_count;
                 }
                 break;
-
+            }
             case DTY_PixelsNormal:
             case DTY_PixelsInterpolated:
-
+            {
                 memory_platform.rf_memcpy(&(*bytes)[offset], &profile->pixels_format.pixels_count, sizeof(profile->pixels_format.pixels_count));
                 offset+=sizeof(profile->pixels_format.pixels_count);
-                memory_platform.rf_memcpy(&(*bytes)[offset], &profile->pixels_format.pixels, profile->pixels_format.pixels_count * 2);
+                memory_platform.rf_memcpy(&(*bytes)[offset], profile->pixels_format.pixels, profile->pixels_format.pixels_count * 2);
                 offset+=profile->pixels_format.pixels_count * 2;
                 if (profile->header.flags & 0x01){
                     memory_platform.rf_memcpy(&(*bytes)[offset], &profile->intensity_count, sizeof(profile->intensity_count));
                     offset+=sizeof(profile->intensity_count);
-                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile->intensity, profile->intensity_count);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], profile->intensity, profile->intensity_count);
                     offset+=profile->intensity_count;
                 }
                 break;
+            }
             }
             break;
 
