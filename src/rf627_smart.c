@@ -780,7 +780,7 @@ rf627_smart_profile2D_t* rf627_smart_get_profile2D(rf627_smart_t* scanner, rfBoo
                         profile->pixels_format.pixels_count++;
                         if (profile->header.flags & 0x01)
                         {
-                            profile->intensity[profile->intensity_count] = RX[profile_header_size + pt_count*4 + i];
+                            profile->intensity[profile->intensity_count] = RX[profile_header_size + pt_count*2 + i];
                             profile->intensity_count++;
                         }
 
@@ -5044,7 +5044,7 @@ rfBool rf627_smart_get_dumps_profiles_by_service_protocol(
                             profile_array[i]->rf627smart_profile2D->pixels_format.pixels_count++;
                             if (profile_array[i]->rf627smart_profile2D->header.flags & 0x01)
                             {
-                                profile_array[i]->rf627smart_profile2D->intensity[profile_array[i]->rf627smart_profile2D->intensity_count] = ((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + pt_count*4 + ii];
+                                profile_array[i]->rf627smart_profile2D->intensity[profile_array[i]->rf627smart_profile2D->intensity_count] = ((rfUint8*)(&(((answer*)result)->data[i * dump_unit_size])))[profile_header_size + pt_count*2 + ii];
                                 profile_array[i]->rf627smart_profile2D->intensity_count++;
                             }
 
