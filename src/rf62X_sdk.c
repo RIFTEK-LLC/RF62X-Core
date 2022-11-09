@@ -2207,29 +2207,27 @@ rfBool convert_profile2D_to_bytes(rf627_profile2D_t *profile2D, char **bytes, ui
 
             break;
         case kRF627_SMART:
-            rf627_smart_profile2D_t* profile = profile2D->rf627smart_profile2D;
-            *data_size = 1 + profile->header.data_offset;
-            switch (profile->header.data_type)
+            *data_size = 1 + profile2D->rf627smart_profile2D->header.data_offset;
+            switch (profile2D->rf627smart_profile2D->header.data_type)
             {
             case DTY_ProfileNormal:
             case DTY_ProfileInterpolated:
-
-                *data_size+=sizeof(profile->profile_format.points_count);
-                *data_size+=profile->profile_format.points_count * 8;
-                if (profile->header.flags & 0x01){
-                    *data_size+=sizeof(profile->intensity_count);
-                    *data_size+=profile->intensity_count;
+                *data_size+=sizeof(profile2D->rf627smart_profile2D->profile_format.points_count);
+                *data_size+=profile2D->rf627smart_profile2D->profile_format.points_count * 8;
+                if (profile2D->rf627smart_profile2D->header.flags & 0x01){
+                    *data_size+=sizeof(profile2D->rf627smart_profile2D->intensity_count);
+                    *data_size+=profile2D->rf627smart_profile2D->intensity_count;
                 }
                 break;
 
             case DTY_PixelsNormal:
             case DTY_PixelsInterpolated:
 
-                *data_size+=sizeof(profile->pixels_format.pixels_count);
-                *data_size+=profile->pixels_format.pixels_count * 2;
-                if (profile->header.flags & 0x01){
-                    *data_size+=sizeof(profile->intensity_count);
-                    *data_size+=profile->intensity_count;
+                *data_size+=sizeof(profile2D->rf627smart_profile2D->pixels_format.pixels_count);
+                *data_size+=profile2D->rf627smart_profile2D->pixels_format.pixels_count * 2;
+                if (profile2D->rf627smart_profile2D->header.flags & 0x01){
+                    *data_size+=sizeof(profile2D->rf627smart_profile2D->intensity_count);
+                    *data_size+=profile2D->rf627smart_profile2D->intensity_count;
                 }
                 break;
             }
@@ -2237,81 +2235,81 @@ rfBool convert_profile2D_to_bytes(rf627_profile2D_t *profile2D, char **bytes, ui
 
             memory_platform.rf_memcpy(&(*bytes)[0], &profile2D->type, 1);
             offset+=1;
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.data_type, sizeof(profile->header.data_type));
-            offset+=sizeof(profile->header.data_type);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.flags, sizeof(profile->header.flags));
-            offset+=sizeof(profile->header.flags);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.device_type, sizeof(profile->header.device_type));
-            offset+=sizeof(profile->header.device_type);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.serial_number, sizeof(profile->header.serial_number));
-            offset+=sizeof(profile->header.serial_number);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.system_time, sizeof(profile->header.system_time));
-            offset+=sizeof(profile->header.system_time);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.proto_version_major, sizeof(profile->header.proto_version_major));
-            offset+=sizeof(profile->header.proto_version_major);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.proto_version_minor, sizeof(profile->header.proto_version_minor));
-            offset+=sizeof(profile->header.proto_version_minor);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.hardware_params_offset, sizeof(profile->header.hardware_params_offset));
-            offset+=sizeof(profile->header.hardware_params_offset);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.data_offset, sizeof(profile->header.data_offset));
-            offset+=sizeof(profile->header.data_offset);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.packet_count, sizeof(profile->header.packet_count));
-            offset+=sizeof(profile->header.packet_count);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.measure_count, sizeof(profile->header.measure_count));
-            offset+=sizeof(profile->header.measure_count);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.zmr, sizeof(profile->header.zmr));
-            offset+=sizeof(profile->header.zmr);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.xemr, sizeof(profile->header.xemr));
-            offset+=sizeof(profile->header.xemr);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.discrete_value, sizeof(profile->header.discrete_value));
-            offset+=sizeof(profile->header.discrete_value);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.reserved_0, sizeof(profile->header.reserved_0));
-            offset+=sizeof(profile->header.reserved_0);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.license_hash, sizeof(profile->header.license_hash));
-            offset+=sizeof(profile->header.license_hash);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.exposure_time, sizeof(profile->header.exposure_time));
-            offset+=sizeof(profile->header.exposure_time);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.laser_value, sizeof(profile->header.laser_value));
-            offset+=sizeof(profile->header.laser_value);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.step_count, sizeof(profile->header.step_count));
-            offset+=sizeof(profile->header.step_count);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.dir, sizeof(profile->header.dir));
-            offset+=sizeof(profile->header.dir);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.payload_size, sizeof(profile->header.payload_size));
-            offset+=sizeof(profile->header.payload_size);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile->header.bytes_per_point, sizeof(profile->header.bytes_per_point));
-            offset+=sizeof(profile->header.bytes_per_point);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.data_type, sizeof(profile2D->rf627smart_profile2D->header.data_type));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.data_type);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.flags, sizeof(profile2D->rf627smart_profile2D->header.flags));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.flags);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.device_type, sizeof(profile2D->rf627smart_profile2D->header.device_type));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.device_type);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.serial_number, sizeof(profile2D->rf627smart_profile2D->header.serial_number));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.serial_number);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.system_time, sizeof(profile2D->rf627smart_profile2D->header.system_time));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.system_time);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.proto_version_major, sizeof(profile2D->rf627smart_profile2D->header.proto_version_major));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.proto_version_major);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.proto_version_minor, sizeof(profile2D->rf627smart_profile2D->header.proto_version_minor));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.proto_version_minor);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.hardware_params_offset, sizeof(profile2D->rf627smart_profile2D->header.hardware_params_offset));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.hardware_params_offset);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.data_offset, sizeof(profile2D->rf627smart_profile2D->header.data_offset));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.data_offset);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.packet_count, sizeof(profile2D->rf627smart_profile2D->header.packet_count));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.packet_count);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.measure_count, sizeof(profile2D->rf627smart_profile2D->header.measure_count));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.measure_count);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.zmr, sizeof(profile2D->rf627smart_profile2D->header.zmr));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.zmr);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.xemr, sizeof(profile2D->rf627smart_profile2D->header.xemr));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.xemr);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.discrete_value, sizeof(profile2D->rf627smart_profile2D->header.discrete_value));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.discrete_value);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.reserved_0, sizeof(profile2D->rf627smart_profile2D->header.reserved_0));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.reserved_0);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.license_hash, sizeof(profile2D->rf627smart_profile2D->header.license_hash));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.license_hash);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.exposure_time, sizeof(profile2D->rf627smart_profile2D->header.exposure_time));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.exposure_time);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.laser_value, sizeof(profile2D->rf627smart_profile2D->header.laser_value));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.laser_value);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.step_count, sizeof(profile2D->rf627smart_profile2D->header.step_count));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.step_count);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.dir, sizeof(profile2D->rf627smart_profile2D->header.dir));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.dir);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.payload_size, sizeof(profile2D->rf627smart_profile2D->header.payload_size));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.payload_size);
+            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.bytes_per_point, sizeof(profile2D->rf627smart_profile2D->header.bytes_per_point));
+            offset+=sizeof(profile2D->rf627smart_profile2D->header.bytes_per_point);
 
-            switch (profile->header.data_type)
+            switch (profile2D->rf627smart_profile2D->header.data_type)
             {
             case DTY_ProfileNormal:
             case DTY_ProfileInterpolated:
             {
 
-                memory_platform.rf_memcpy(&(*bytes)[offset], &profile->profile_format.points_count, sizeof(profile->profile_format.points_count));
-                offset+=sizeof(profile->profile_format.points_count);
-                memory_platform.rf_memcpy(&(*bytes)[offset], profile->profile_format.points, profile->profile_format.points_count * 8);
-                offset+=profile->profile_format.points_count * 8;
-                if (profile->header.flags & 0x01){
-                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile->intensity_count, sizeof(profile->intensity_count));
-                    offset+=sizeof(profile->intensity_count);
-                    memory_platform.rf_memcpy(&(*bytes)[offset], profile->intensity, profile->intensity_count);
-                    offset+=profile->intensity_count;
+                memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->profile_format.points_count, sizeof(profile2D->rf627smart_profile2D->profile_format.points_count));
+                offset+=sizeof(profile2D->rf627smart_profile2D->profile_format.points_count);
+                memory_platform.rf_memcpy(&(*bytes)[offset], profile2D->rf627smart_profile2D->profile_format.points, profile2D->rf627smart_profile2D->profile_format.points_count * 8);
+                offset+=profile2D->rf627smart_profile2D->profile_format.points_count * 8;
+                if (profile2D->rf627smart_profile2D->header.flags & 0x01){
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->intensity_count, sizeof(profile2D->rf627smart_profile2D->intensity_count));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->intensity_count);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], profile2D->rf627smart_profile2D->intensity, profile2D->rf627smart_profile2D->intensity_count);
+                    offset+=profile2D->rf627smart_profile2D->intensity_count;
                 }
                 break;
             }
             case DTY_PixelsNormal:
             case DTY_PixelsInterpolated:
             {
-                memory_platform.rf_memcpy(&(*bytes)[offset], &profile->pixels_format.pixels_count, sizeof(profile->pixels_format.pixels_count));
-                offset+=sizeof(profile->pixels_format.pixels_count);
-                memory_platform.rf_memcpy(&(*bytes)[offset], profile->pixels_format.pixels, profile->pixels_format.pixels_count * 2);
-                offset+=profile->pixels_format.pixels_count * 2;
-                if (profile->header.flags & 0x01){
-                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile->intensity_count, sizeof(profile->intensity_count));
-                    offset+=sizeof(profile->intensity_count);
-                    memory_platform.rf_memcpy(&(*bytes)[offset], profile->intensity, profile->intensity_count);
-                    offset+=profile->intensity_count;
+                memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->pixels_format.pixels_count, sizeof(profile2D->rf627smart_profile2D->pixels_format.pixels_count));
+                offset+=sizeof(profile2D->rf627smart_profile2D->pixels_format.pixels_count);
+                memory_platform.rf_memcpy(&(*bytes)[offset], profile2D->rf627smart_profile2D->pixels_format.pixels, profile2D->rf627smart_profile2D->pixels_format.pixels_count * 2);
+                offset+=profile2D->rf627smart_profile2D->pixels_format.pixels_count * 2;
+                if (profile2D->rf627smart_profile2D->header.flags & 0x01){
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->intensity_count, sizeof(profile2D->rf627smart_profile2D->intensity_count));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->intensity_count);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], profile2D->rf627smart_profile2D->intensity, profile2D->rf627smart_profile2D->intensity_count);
+                    offset+=profile2D->rf627smart_profile2D->intensity_count;
                 }
                 break;
             }
@@ -2345,72 +2343,70 @@ uint32_t convert_profile2D_from_bytes(rf627_profile2D_t* profile2D,
             profile2D->rf627smart_profile2D =
                     memory_platform.rf_calloc(1, sizeof(rf627_smart_profile2D_t));
 
-            rf627_smart_profile2D_t* profile = profile2D->rf627smart_profile2D;
-
             rf627_old_stream_msg_t header_from_msg = rf627_protocol_old_unpack_header_msg_from_profile_packet((rfUint8*)&bytes[1]);
 
-            profile->header.data_type = header_from_msg.data_type;
-            profile->header.flags = header_from_msg.flags;
-            profile->header.device_type = header_from_msg.device_type;
-            profile->header.serial_number = header_from_msg.serial_number;
-            profile->header.system_time = header_from_msg.system_time;
+            profile2D->rf627smart_profile2D->header.data_type = header_from_msg.data_type;
+            profile2D->rf627smart_profile2D->header.flags = header_from_msg.flags;
+            profile2D->rf627smart_profile2D->header.device_type = header_from_msg.device_type;
+            profile2D->rf627smart_profile2D->header.serial_number = header_from_msg.serial_number;
+            profile2D->rf627smart_profile2D->header.system_time = header_from_msg.system_time;
 
-            profile->header.proto_version_major = header_from_msg.proto_version_major;
-            profile->header.proto_version_minor = header_from_msg.proto_version_minor;
-            profile->header.hardware_params_offset = header_from_msg.hardware_params_offset;
-            profile->header.data_offset = header_from_msg.data_offset;
-            profile->header.packet_count = header_from_msg.packet_count;
-            profile->header.measure_count = header_from_msg.measure_count;
+            profile2D->rf627smart_profile2D->header.proto_version_major = header_from_msg.proto_version_major;
+            profile2D->rf627smart_profile2D->header.proto_version_minor = header_from_msg.proto_version_minor;
+            profile2D->rf627smart_profile2D->header.hardware_params_offset = header_from_msg.hardware_params_offset;
+            profile2D->rf627smart_profile2D->header.data_offset = header_from_msg.data_offset;
+            profile2D->rf627smart_profile2D->header.packet_count = header_from_msg.packet_count;
+            profile2D->rf627smart_profile2D->header.measure_count = header_from_msg.measure_count;
 
-            profile->header.zmr = header_from_msg.zmr;
-            profile->header.xemr = header_from_msg.xemr;
-            profile->header.discrete_value = header_from_msg.discrete_value;
-            profile->header.license_hash = header_from_msg.license_hash;
+            profile2D->rf627smart_profile2D->header.zmr = header_from_msg.zmr;
+            profile2D->rf627smart_profile2D->header.xemr = header_from_msg.xemr;
+            profile2D->rf627smart_profile2D->header.discrete_value = header_from_msg.discrete_value;
+            profile2D->rf627smart_profile2D->header.license_hash = header_from_msg.license_hash;
 
-            profile->header.exposure_time = header_from_msg.exposure_time;
-            profile->header.laser_value = header_from_msg.laser_value;
-            profile->header.step_count = header_from_msg.step_count;
-            profile->header.dir = header_from_msg.dir;
-            profile->header.payload_size = header_from_msg.payload_size;
-            profile->header.bytes_per_point = header_from_msg.bytes_per_point;
+            profile2D->rf627smart_profile2D->header.exposure_time = header_from_msg.exposure_time;
+            profile2D->rf627smart_profile2D->header.laser_value = header_from_msg.laser_value;
+            profile2D->rf627smart_profile2D->header.step_count = header_from_msg.step_count;
+            profile2D->rf627smart_profile2D->header.dir = header_from_msg.dir;
+            profile2D->rf627smart_profile2D->header.payload_size = header_from_msg.payload_size;
+            profile2D->rf627smart_profile2D->header.bytes_per_point = header_from_msg.bytes_per_point;
 
-            offset = 1 + profile->header.data_offset;
-            switch (profile->header.data_type)
+            offset = 1 + profile2D->rf627smart_profile2D->header.data_offset;
+            switch (profile2D->rf627smart_profile2D->header.data_type)
             {
             case DTY_ProfileNormal:
             case DTY_ProfileInterpolated:
 
-                profile->profile_format.points_count = *(rfUint32*)&bytes[offset];
-                offset += sizeof(profile->profile_format.points_count);
-                profile->profile_format.points =
-                        memory_platform.rf_calloc(profile->profile_format.points_count, sizeof (rf627_old_point2D_t));
-                memory_platform.rf_memcpy(profile->profile_format.points, &bytes[offset], profile->profile_format.points_count * 8);
-                offset += profile->profile_format.points_count * 8;
-                if (profile->header.flags & 0x01){
-                    profile->intensity_count = *(rfUint32*)&bytes[offset];
-                    offset += sizeof(profile->intensity_count);
-                    profile->intensity =
-                            memory_platform.rf_calloc(profile->intensity_count, sizeof (rfUint8));
-                    memory_platform.rf_memcpy(profile->intensity, &bytes[offset], profile->intensity_count);
-                    offset += profile->intensity_count;
+                profile2D->rf627smart_profile2D->profile_format.points_count = *(rfUint32*)&bytes[offset];
+                offset += sizeof(profile2D->rf627smart_profile2D->profile_format.points_count);
+                profile2D->rf627smart_profile2D->profile_format.points =
+                        memory_platform.rf_calloc(profile2D->rf627smart_profile2D->profile_format.points_count, sizeof (rf627_old_point2D_t));
+                memory_platform.rf_memcpy(profile2D->rf627smart_profile2D->profile_format.points, &bytes[offset], profile2D->rf627smart_profile2D->profile_format.points_count * 8);
+                offset += profile2D->rf627smart_profile2D->profile_format.points_count * 8;
+                if (profile2D->rf627smart_profile2D->header.flags & 0x01){
+                    profile2D->rf627smart_profile2D->intensity_count = *(rfUint32*)&bytes[offset];
+                    offset += sizeof(profile2D->rf627smart_profile2D->intensity_count);
+                    profile2D->rf627smart_profile2D->intensity =
+                            memory_platform.rf_calloc(profile2D->rf627smart_profile2D->intensity_count, sizeof (rfUint8));
+                    memory_platform.rf_memcpy(profile2D->rf627smart_profile2D->intensity, &bytes[offset], profile2D->rf627smart_profile2D->intensity_count);
+                    offset += profile2D->rf627smart_profile2D->intensity_count;
                 }
                 break;
             case DTY_PixelsNormal:
             case DTY_PixelsInterpolated:
 
-                profile->pixels_format.pixels_count = *(rfUint32*)&bytes[offset];
-                offset += sizeof(profile->pixels_format.pixels_count);
-                profile->pixels_format.pixels =
-                        memory_platform.rf_calloc(profile->pixels_format.pixels_count, sizeof (rfUint16));
-                memory_platform.rf_memcpy(profile->pixels_format.pixels, &bytes[offset], profile->pixels_format.pixels_count * 2);
-                offset += profile->pixels_format.pixels_count * 2;
-                if (profile->header.flags & 0x01){
-                    profile->intensity_count = *(rfUint32*)&bytes[offset];
-                    offset += sizeof(profile->intensity_count);
-                    profile->intensity =
-                            memory_platform.rf_calloc(profile->intensity_count, sizeof (rfUint8));
-                    memory_platform.rf_memcpy(profile->intensity, &bytes[offset], profile->intensity_count);
-                    offset += profile->intensity_count;
+                profile2D->rf627smart_profile2D->pixels_format.pixels_count = *(rfUint32*)&bytes[offset];
+                offset += sizeof(profile2D->rf627smart_profile2D->pixels_format.pixels_count);
+                profile2D->rf627smart_profile2D->pixels_format.pixels =
+                        memory_platform.rf_calloc(profile2D->rf627smart_profile2D->pixels_format.pixels_count, sizeof (rfUint16));
+                memory_platform.rf_memcpy(profile2D->rf627smart_profile2D->pixels_format.pixels, &bytes[offset], profile2D->rf627smart_profile2D->pixels_format.pixels_count * 2);
+                offset += profile2D->rf627smart_profile2D->pixels_format.pixels_count * 2;
+                if (profile2D->rf627smart_profile2D->header.flags & 0x01){
+                    profile2D->rf627smart_profile2D->intensity_count = *(rfUint32*)&bytes[offset];
+                    offset += sizeof(profile2D->rf627smart_profile2D->intensity_count);
+                    profile2D->rf627smart_profile2D->intensity =
+                            memory_platform.rf_calloc(profile2D->rf627smart_profile2D->intensity_count, sizeof (rfUint8));
+                    memory_platform.rf_memcpy(profile2D->rf627smart_profile2D->intensity, &bytes[offset], profile2D->rf627smart_profile2D->intensity_count);
+                    offset += profile2D->rf627smart_profile2D->intensity_count;
                 }
                 break;
             }
