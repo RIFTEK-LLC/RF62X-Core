@@ -390,10 +390,27 @@ typedef struct
     rfUint32    packet_count;
     rfUint32    measure_count;
 
-    rfUint16    zmr;
-    rfUint16    xemr;
-    rfUint16    discrete_value;
-    rfUint8     reserved_0[10];
+    union{
+        struct{
+            rfUint16    zmr;
+            rfUint16    xemr;
+            rfUint16    discrete_value;
+            rfUint8     reserved_0[10];
+        }v1_0_standart;
+        struct{
+            rfUint16    zmr;
+            rfUint16    xemr;
+            rfUint16    discrete_value;
+            rfUint8     reserved_0[10];
+        }v1_1_standart;
+        struct{
+            rfUint16    zmr;
+            rfUint16    xemr;
+            rfFloat     scaling_factor;
+            rfUint8     reserved_0[8];
+        }v1_1_polynomial;
+    };
+
     rfUint32    license_hash;
 
     rfUint32    exposure_time;
@@ -423,6 +440,21 @@ typedef enum
     DTY_PixelsInterpolated  = 0x12,
     DTY_ProfileInterpolated = 0x13
 } rf627_old_data_type_t;
+
+typedef enum
+{
+    SPDT_v1_0_PixelsNormal        = 0x10,
+    SPDT_v1_0_ProfileNormal       = 0x11,
+    SPDT_v1_0_PixelsInterpolated  = 0x12,
+    SPDT_v1_0_ProfileInterpolated = 0x13
+} rf627_smart_profile_data_type_v1_0_t;
+
+typedef enum
+{
+    SPDT_v1_1_Pixels              = 0x10,
+    SPDT_v1_1_ProfileTable        = 0x11,
+    SPDT_v1_1_ProfilePoly         = 0x20,
+} rf627_smart_profile_data_type_v1_1_t;
 
 /*! Structure to store a point of profile
  */

@@ -2257,14 +2257,43 @@ rfBool convert_profile2D_to_bytes(rf627_profile2D_t *profile2D, char **bytes, ui
             offset+=sizeof(profile2D->rf627smart_profile2D->header.packet_count);
             memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.measure_count, sizeof(profile2D->rf627smart_profile2D->header.measure_count));
             offset+=sizeof(profile2D->rf627smart_profile2D->header.measure_count);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.zmr, sizeof(profile2D->rf627smart_profile2D->header.zmr));
-            offset+=sizeof(profile2D->rf627smart_profile2D->header.zmr);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.xemr, sizeof(profile2D->rf627smart_profile2D->header.xemr));
-            offset+=sizeof(profile2D->rf627smart_profile2D->header.xemr);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.discrete_value, sizeof(profile2D->rf627smart_profile2D->header.discrete_value));
-            offset+=sizeof(profile2D->rf627smart_profile2D->header.discrete_value);
-            memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.reserved_0, sizeof(profile2D->rf627smart_profile2D->header.reserved_0));
-            offset+=sizeof(profile2D->rf627smart_profile2D->header.reserved_0);
+            if (profile2D->rf627smart_profile2D->header.proto_version_major == 1 &&
+                    profile2D->rf627smart_profile2D->header.proto_version_minor == 0)
+            {
+                memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_0_standart.zmr, sizeof(profile2D->rf627smart_profile2D->header.v1_0_standart.zmr));
+                offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_0_standart.zmr);
+                memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_0_standart.xemr, sizeof(profile2D->rf627smart_profile2D->header.v1_0_standart.xemr));
+                offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_0_standart.xemr);
+                memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_0_standart.discrete_value, sizeof(profile2D->rf627smart_profile2D->header.v1_0_standart.discrete_value));
+                offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_0_standart.discrete_value);
+                memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_0_standart.reserved_0, sizeof(profile2D->rf627smart_profile2D->header.v1_0_standart.reserved_0));
+                offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_0_standart.reserved_0);
+            }else if (profile2D->rf627smart_profile2D->header.proto_version_major == 1 &&
+                      profile2D->rf627smart_profile2D->header.proto_version_minor == 1)
+            {
+                if (profile2D->rf627smart_profile2D->header.data_type == SPDT_v1_1_ProfilePoly)
+                {
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_1_polynomial.zmr, sizeof(profile2D->rf627smart_profile2D->header.v1_1_polynomial.zmr));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_1_polynomial.zmr);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_1_polynomial.xemr, sizeof(profile2D->rf627smart_profile2D->header.v1_1_polynomial.xemr));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_1_polynomial.xemr);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_1_polynomial.scaling_factor, sizeof(profile2D->rf627smart_profile2D->header.v1_1_polynomial.scaling_factor));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_1_polynomial.scaling_factor);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_1_polynomial.reserved_0, sizeof(profile2D->rf627smart_profile2D->header.v1_1_polynomial.reserved_0));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_1_polynomial.reserved_0);
+                }else
+                {
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_1_standart.zmr, sizeof(profile2D->rf627smart_profile2D->header.v1_1_standart.zmr));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_1_standart.zmr);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_1_standart.xemr, sizeof(profile2D->rf627smart_profile2D->header.v1_1_standart.xemr));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_1_standart.xemr);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_1_standart.discrete_value, sizeof(profile2D->rf627smart_profile2D->header.v1_1_standart.discrete_value));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_1_standart.discrete_value);
+                    memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.v1_1_standart.reserved_0, sizeof(profile2D->rf627smart_profile2D->header.v1_1_standart.reserved_0));
+                    offset+=sizeof(profile2D->rf627smart_profile2D->header.v1_1_standart.reserved_0);
+                }
+            }
+
             memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.license_hash, sizeof(profile2D->rf627smart_profile2D->header.license_hash));
             offset+=sizeof(profile2D->rf627smart_profile2D->header.license_hash);
             memory_platform.rf_memcpy(&(*bytes)[offset], &profile2D->rf627smart_profile2D->header.exposure_time, sizeof(profile2D->rf627smart_profile2D->header.exposure_time));
@@ -2358,9 +2387,28 @@ uint32_t convert_profile2D_from_bytes(rf627_profile2D_t* profile2D,
             profile2D->rf627smart_profile2D->header.packet_count = header_from_msg.packet_count;
             profile2D->rf627smart_profile2D->header.measure_count = header_from_msg.measure_count;
 
-            profile2D->rf627smart_profile2D->header.zmr = header_from_msg.zmr;
-            profile2D->rf627smart_profile2D->header.xemr = header_from_msg.xemr;
-            profile2D->rf627smart_profile2D->header.discrete_value = header_from_msg.discrete_value;
+            if (profile2D->rf627smart_profile2D->header.proto_version_major == 1 &&
+                    profile2D->rf627smart_profile2D->header.proto_version_minor == 0)
+            {
+                profile2D->rf627smart_profile2D->header.v1_0_standart.zmr = header_from_msg.v1_0_standart.zmr;
+                profile2D->rf627smart_profile2D->header.v1_0_standart.xemr = header_from_msg.v1_0_standart.xemr;
+                profile2D->rf627smart_profile2D->header.v1_0_standart.discrete_value = header_from_msg.v1_0_standart.discrete_value;
+            }else if (profile2D->rf627smart_profile2D->header.proto_version_major == 1 &&
+                      profile2D->rf627smart_profile2D->header.proto_version_minor == 1)
+            {
+                if (profile2D->rf627smart_profile2D->header.data_type == SPDT_v1_1_ProfilePoly)
+                {
+                    profile2D->rf627smart_profile2D->header.v1_1_polynomial.zmr = header_from_msg.v1_1_polynomial.zmr;
+                    profile2D->rf627smart_profile2D->header.v1_1_polynomial.xemr = header_from_msg.v1_1_polynomial.xemr;
+                    profile2D->rf627smart_profile2D->header.v1_1_polynomial.scaling_factor = header_from_msg.v1_1_polynomial.scaling_factor;
+                }else
+                {
+                    profile2D->rf627smart_profile2D->header.v1_1_standart.zmr = header_from_msg.v1_1_standart.zmr;
+                    profile2D->rf627smart_profile2D->header.v1_1_standart.xemr = header_from_msg.v1_1_standart.xemr;
+                    profile2D->rf627smart_profile2D->header.v1_1_standart.discrete_value = header_from_msg.v1_1_standart.discrete_value;
+                }
+            }
+
             profile2D->rf627smart_profile2D->header.license_hash = header_from_msg.license_hash;
 
             profile2D->rf627smart_profile2D->header.exposure_time = header_from_msg.exposure_time;

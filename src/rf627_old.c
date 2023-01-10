@@ -714,9 +714,9 @@ rf627_old_profile2D_t* rf627_old_get_profile2D(rf627_old_t* scanner, rfBool zero
         profile->header.packet_count = header_from_msg.packet_count;
         profile->header.measure_count = header_from_msg.measure_count;
 
-        profile->header.zmr = header_from_msg.zmr;
-        profile->header.xemr = header_from_msg.xemr;
-        profile->header.discrete_value = header_from_msg.discrete_value;
+        profile->header.v1_0_standart.zmr = header_from_msg.v1_0_standart.zmr;
+        profile->header.v1_0_standart.xemr = header_from_msg.v1_0_standart.xemr;
+        profile->header.v1_0_standart.discrete_value = header_from_msg.v1_0_standart.discrete_value;
 
         profile->header.exposure_time = header_from_msg.exposure_time;
         profile->header.laser_value = header_from_msg.laser_value;
@@ -788,10 +788,10 @@ rf627_old_profile2D_t* rf627_old_get_profile2D(rf627_old_t* scanner, rfBool zero
                     x = *(rfInt16*)(&RX[profile_header_size + i*4]);
                     if (zero_points == 0 && z > 0 && x != 0)
                     {
-                        pt.x = (rfDouble)(x) * (rfDouble)(profile->header.xemr) /
-                                (rfDouble)(profile->header.discrete_value);
-                        pt.z = (rfDouble)(z) * (rfDouble)(profile->header.zmr) /
-                                (rfDouble)(profile->header.discrete_value);
+                        pt.x = (rfDouble)(x) * (rfDouble)(profile->header.v1_0_standart.xemr) /
+                                (rfDouble)(profile->header.v1_0_standart.discrete_value);
+                        pt.z = (rfDouble)(z) * (rfDouble)(profile->header.v1_0_standart.zmr) /
+                                (rfDouble)(profile->header.v1_0_standart.discrete_value);
 
                         profile->profile_format.points[profile->profile_format.points_count] = pt;
                         profile->profile_format.points_count++;
@@ -802,10 +802,10 @@ rf627_old_profile2D_t* rf627_old_get_profile2D(rf627_old_t* scanner, rfBool zero
                         }
                     }else if(zero_points != 0)
                     {
-                        pt.x = (rfDouble)(x) * (rfDouble)(profile->header.xemr) /
-                                (rfDouble)(profile->header.discrete_value);
-                        pt.z = (rfDouble)(z) * (rfDouble)(profile->header.zmr) /
-                                (rfDouble)(profile->header.discrete_value);
+                        pt.x = (rfDouble)(x) * (rfDouble)(profile->header.v1_0_standart.xemr) /
+                                (rfDouble)(profile->header.v1_0_standart.discrete_value);
+                        pt.z = (rfDouble)(z) * (rfDouble)(profile->header.v1_0_standart.zmr) /
+                                (rfDouble)(profile->header.v1_0_standart.discrete_value);
 
                         profile->profile_format.points[profile->profile_format.points_count] = pt;
                         profile->profile_format.points_count++;
@@ -883,9 +883,9 @@ rf627_old_profile3D_t* rf627_old_get_profile3D(rf627_old_t* scanner, rfFloat ste
         profile->header.packet_count = header_from_msg.packet_count;
         profile->header.measure_count = header_from_msg.measure_count;
 
-        profile->header.zmr = header_from_msg.zmr;
-        profile->header.xemr = header_from_msg.xemr;
-        profile->header.discrete_value = header_from_msg.discrete_value;
+        profile->header.v1_0_standart.zmr = header_from_msg.v1_0_standart.zmr;
+        profile->header.v1_0_standart.xemr = header_from_msg.v1_0_standart.xemr;
+        profile->header.v1_0_standart.discrete_value = header_from_msg.v1_0_standart.discrete_value;
 
         profile->header.exposure_time = header_from_msg.exposure_time;
         profile->header.laser_value = header_from_msg.laser_value;
@@ -957,14 +957,14 @@ rf627_old_profile3D_t* rf627_old_get_profile3D(rf627_old_t* scanner, rfFloat ste
                     z = *(rfUint16*)(&RX[profile_header_size + i*4 + 2]);
                     if (zero_points == 0 && z > 0 && x != 0)
                     {
-                        pt.x = (rfDouble)(x) * (rfDouble)(profile->header.xemr) /
-                                (rfDouble)(profile->header.discrete_value);
+                        pt.x = (rfDouble)(x) * (rfDouble)(profile->header.v1_0_standart.xemr) /
+                                (rfDouble)(profile->header.v1_0_standart.discrete_value);
                         if(count_type == kSTEP)
                             pt.y = k * pt.x + step_size * profile->header.step_count;
                         else if(count_type == kMEASURE)
                             pt.y = k * pt.x + step_size * profile->header.measure_count;
-                        pt.z = (rfDouble)(z) * (rfDouble)(profile->header.zmr) /
-                                (rfDouble)(profile->header.discrete_value);
+                        pt.z = (rfDouble)(z) * (rfDouble)(profile->header.v1_0_standart.zmr) /
+                                (rfDouble)(profile->header.v1_0_standart.discrete_value);
 
                         profile->profile_format.points[profile->profile_format.points_count] = pt;
                         profile->profile_format.points_count++;
@@ -975,14 +975,14 @@ rf627_old_profile3D_t* rf627_old_get_profile3D(rf627_old_t* scanner, rfFloat ste
                         }
                     }else if(zero_points != 0)
                     {
-                        pt.x = (rfDouble)(x) * (rfDouble)(profile->header.xemr) /
-                                (rfDouble)(profile->header.discrete_value);
+                        pt.x = (rfDouble)(x) * (rfDouble)(profile->header.v1_0_standart.xemr) /
+                                (rfDouble)(profile->header.v1_0_standart.discrete_value);
                         if(count_type == kSTEP)
                             pt.y = k * pt.x + step_size * profile->header.step_count;
                         else if(count_type == kMEASURE)
                             pt.y = k * pt.x + step_size * profile->header.measure_count;
-                        pt.z = (rfDouble)(z) * (rfDouble)(profile->header.zmr) /
-                                (rfDouble)(profile->header.discrete_value);
+                        pt.z = (rfDouble)(z) * (rfDouble)(profile->header.v1_0_standart.zmr) /
+                                (rfDouble)(profile->header.v1_0_standart.discrete_value);
 
                         profile->profile_format.points[profile->profile_format.points_count] = pt;
                         profile->profile_format.points_count++;
