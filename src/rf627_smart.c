@@ -674,7 +674,7 @@ rf627_smart_profile2D_t* rf627_smart_get_profile2D(rf627_smart_t* scanner, rfBoo
             }
             else if (profile->header.proto_version_major == 1 && profile->header.proto_version_minor == 1)
             {
-                if (profile->header.data_type == 0x20)
+                if (profile->header.data_type == SPDT_v1_1_ProfilePoly)
                 {
                     profile->header.v1_1_polynomial.zmr = header_from_msg.v1_1_polynomial.zmr;
                     profile->header.v1_1_polynomial.xemr = header_from_msg.v1_1_polynomial.xemr;
@@ -1989,15 +1989,17 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
             // type
             if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "type"))
             {
-                char* test = (char*)mpack_node_str(mpack_node_map_cstr(mpack_node_array_at(factory, i), "type"));
-                p = (parameter_t*)create_parameter_from_type(test);
-                // TODO is_changed как использовать
-                p->is_changed = FALSE;
+                char* param_type = (char*)mpack_node_str(
+                            mpack_node_map_cstr(mpack_node_array_at(factory, i), "type"));
+                p = (parameter_t*)create_parameter_from_type(param_type);
             }
 
             if (p == NULL)
             {
                 continue;
+            }else
+            {
+                p->is_changed = FALSE;
             }
 
 
@@ -2695,15 +2697,16 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
             // type
             if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "type"))
             {
-                char* test = (char*)mpack_node_str(mpack_node_map_cstr(mpack_node_array_at(user, i), "type"));
-                p = (parameter_t*)create_parameter_from_type(test);
-                // TODO is_changed как использовать
-                p->is_changed = FALSE;
+                char* param_type = (char*)mpack_node_str(mpack_node_map_cstr(mpack_node_array_at(user, i), "type"));
+                p = (parameter_t*)create_parameter_from_type(param_type);
             }
 
             if (p == NULL)
             {
                 continue;
+            }else
+            {
+                p->is_changed = FALSE;
             }
 
 
