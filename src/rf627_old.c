@@ -1223,7 +1223,7 @@ valuesEnum_t* createParamEnum(enum ParamEnumType enum_type)
 
         key = "true";
         label = "true";
-        boolEnum->rec[enum_index].value = 0;
+        boolEnum->rec[enum_index].value = 1;
         boolEnum->rec[enum_index].key = memory_platform.rf_calloc(1, rf_strlen(key) + 1);
         memory_platform.rf_memcpy(boolEnum->rec[enum_index].key, key, rf_strlen(key) + 1);
         boolEnum->rec[enum_index].label = memory_platform.rf_calloc(1, rf_strlen(label) + 1);
