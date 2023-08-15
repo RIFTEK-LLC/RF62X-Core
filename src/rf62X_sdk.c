@@ -1134,7 +1134,7 @@ rf627_frame_t* get_frame_from_scanner(scanner_base_t* device, protocol_types_t p
         switch (protocol) {
         case kSERVICE:
             frame->type = kRF627_SMART;
-            frame->rf627smart_frame = rf627_smart_get_frame(device->rf627_smart, 200);
+            frame->rf627smart_frame = rf627_smart_get_frame(device->rf627_smart, 500);
             return frame;
             break;
         case kETHERNET_IP:
