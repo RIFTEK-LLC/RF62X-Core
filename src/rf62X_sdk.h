@@ -183,12 +183,16 @@ API_EXPORT rf627_profile3D_t* get_profile3D_from_scanner(
 
 /**
  * @brief get_frame_from_scanner - Get RAW frame from scanner
+ *
  * @param[in] device Ptr to scanner
+ * @param confirm_enabled Enable confirmation
+ * @param waiting_time Time to wait for a response
  * @param[in] protocol Protocol's type (Service Protocol, ENIP, Modbus-TCP)
  * @return ptr to rf627_frame_t structure
  */
 API_EXPORT rf627_frame_t* get_frame_from_scanner(
-        scanner_base_t *device, protocol_types_t protocol);
+        scanner_base_t *device, rfBool confirm_enabled,
+        rfUint32 waiting_time, protocol_types_t protocol);
 
 /**
  * @brief read_params_from_scanner - Read parameters from device to rfInternal

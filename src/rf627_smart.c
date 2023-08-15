@@ -4893,7 +4893,8 @@ rfInt8 rf627_smart_get_frame_free_result_callback(void* rqst_msg)
 
     return TRUE;
 }
-rf627_smart_frame_t* rf627_smart_get_frame(rf627_smart_t* scanner, rfUint32 timeout)
+rf627_smart_frame_t* rf627_smart_get_frame(
+        rf627_smart_t* scanner, rfBool confirm, rfUint32 timeout)
 {
     // cmd_name - this is logical port/path where data will be send
     char* cmd_name                      = "GET_FRAME";
@@ -4903,7 +4904,7 @@ rf627_smart_frame_t* rf627_smart_get_frame(rf627_smart_t* scanner, rfUint32 time
     // data_type - this is the type of packaging of the sent data
     char* data_type                     = "blob";  // mpack, json, blob..
     uint8_t is_check_crc                = FALSE;   // check crc disabled
-    uint8_t is_confirmation             = TRUE;   // confirmation disabled
+    uint8_t is_confirmation             = confirm; // confirmation flag
     uint8_t is_one_answ                 = TRUE;    // wait only one answer
     uint32_t waiting_time               = timeout; // ms
     uint32_t resends                    = is_confirmation ? 3 : 0;

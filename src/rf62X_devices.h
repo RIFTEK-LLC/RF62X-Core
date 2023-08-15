@@ -434,12 +434,13 @@ rfBool rf627_smart_load_recovery_params_from_scanner(
  * @brief rf627_smart_get_frame - Get frame from scanner
  *
  * @param scanner - ptr to scanner
+ * @param confirm_enabled Enable confirmation
  * @param timeout to get
  *
  * @return ptr to rf627_smart_frame_t on success, else - null
  */
 rf627_smart_frame_t* rf627_smart_get_frame(
-        rf627_smart_t* scanner, rfUint32 timeout);
+        rf627_smart_t* scanner, rfBool confirm_enabled, rfUint32 timeout);
 
 
 /**
