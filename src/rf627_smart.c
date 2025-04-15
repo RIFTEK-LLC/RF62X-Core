@@ -4961,20 +4961,26 @@ rf627_smart_frame_t* rf627_smart_get_frame(
 
             if (answ->status)
             {
-                frame = calloc(1, sizeof (rf627_smart_frame_t));
-                frame->data_size = answ->frame->data_size;
-                frame->data = calloc(frame->data_size, sizeof (rfChar));
-                memcpy(frame->data, (char*)answ->frame->data, frame->data_size);
-                frame->frame_height = answ->frame->frame_height;
-                frame->frame_width = answ->frame->frame_width;
+                if (answ->frame->data_size < 10e7)
+				{
+					frame = calloc(1, sizeof (rf627_smart_frame_t));
+					frame->data_size = answ->frame->data_size;
+					frame->data = calloc(frame->data_size, sizeof (rfChar));
+					memcpy(frame->data, (char*)answ->frame->data, frame->data_size);
+					frame->frame_height = answ->frame->frame_height;
+					frame->frame_width = answ->frame->frame_width;
 
-                frame->user_roi_active = answ->frame->user_roi_active;
+					frame->user_roi_active = answ->frame->user_roi_active;
 
-                frame->user_roi_enabled = answ->frame->user_roi_enabled;
-                frame->user_roi_pos = answ->frame->user_roi_pos;
-                frame->user_roi_size = answ->frame->user_roi_size;
-                frame->fact_sensor_height = answ->frame->fact_sensor_height;
-                frame->fact_sensor_width = answ->frame->fact_sensor_width;
+					frame->user_roi_enabled = answ->frame->user_roi_enabled;
+					frame->user_roi_pos = answ->frame->user_roi_pos;
+					frame->user_roi_size = answ->frame->user_roi_size;
+					frame->fact_sensor_height = answ->frame->fact_sensor_height;
+					frame->fact_sensor_width = answ->frame->fact_sensor_width;
+				}else
+				{
+					frame	= NULL;
+				}
 
 
                 TRACE(TRACE_LEVEL_DEBUG, TRACE_FORMAT_SHORT,
