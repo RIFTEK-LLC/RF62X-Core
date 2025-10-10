@@ -422,6 +422,19 @@ typedef struct
             rfFloat     scaling_factor;
             rfUint8     reserved_0[8];
         }v1_2_polynomial;
+        struct{
+            rfUint16    zmr;
+            rfUint16    xemr;
+            rfUint32    pixels_divider;
+            rfUint16    alignment_with_sensor;
+            rfUint8     reserved_0[6];
+        }v1_3_standart;
+        struct{
+            rfUint16    zmr;
+            rfUint16    xemr;
+            rfFloat     scaling_factor;
+            rfUint8     reserved_0[8];
+        }v1_3_polynomial;
     };
 
     rfUint32    license_hash;
@@ -475,6 +488,13 @@ typedef enum
     SPDT_v1_2_ProfileTable        = 0x11,
     SPDT_v1_2_ProfilePoly         = 0x20,
 } rf627_smart_profile_data_type_v1_2_t;
+
+typedef enum
+{
+    SPDT_v1_3_Pixels              = 0x10,
+    SPDT_v1_3_ProfileTable        = 0x11,
+    SPDT_v1_3_ProfilePoly         = 0x20,
+} rf627_smart_profile_data_type_v1_3_t;
 
 /*! Structure to store a point of profile
  */
@@ -561,6 +581,10 @@ typedef struct
             rfUint16* pixels;
             rfUint32 pixels_count;
         }pixels_format;
+        struct{
+            rfUint32* pixels;
+            rfUint32 pixels_count;
+        }pixels_v1_3_format;
         struct{
             rf627_old_point2D_t* points;
             rfUint32 points_count;
