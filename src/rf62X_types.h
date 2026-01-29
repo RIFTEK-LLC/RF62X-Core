@@ -413,8 +413,9 @@ typedef struct
             rfUint16    zmr;
             rfUint16    xemr;
             rfUint16    discrete_value;
+            rfUint16    reserved;
             rfUint16    alignment_with_sensor;
-            rfUint8     reserved_0[8];
+            rfUint8     reserved_0[6];
         }v1_2_standart;
         struct{
             rfUint16    zmr;
