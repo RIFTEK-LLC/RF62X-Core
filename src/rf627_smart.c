@@ -2854,7 +2854,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 // maxCount
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "maxCount"))
                 {
-                    p->arr_flt->maxCount = mpack_node_u32(mpack_node_map_cstr(mpack_node_array_at(factory, i), "maxCount"));
+                    p->arr_flt->maxCount = mpack_node_float(mpack_node_map_cstr(mpack_node_array_at(factory, i), "maxCount"));
                 }
                 // step
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "step"))
@@ -2912,7 +2912,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 // maxCount
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "maxCount"))
                 {
-                    p->arr_dbl->maxCount = mpack_node_u32(mpack_node_map_cstr(mpack_node_array_at(factory, i), "maxCount"));
+                    p->arr_dbl->maxCount = mpack_node_double(mpack_node_map_cstr(mpack_node_array_at(factory, i), "maxCount"));
                 }
                 // step
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(factory, i), "step"))
@@ -3562,7 +3562,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 // maxCount
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "maxCount"))
                 {
-                    p->arr_flt->maxCount = mpack_node_u32(mpack_node_map_cstr(mpack_node_array_at(user, i), "maxCount"));
+                    p->arr_flt->maxCount = mpack_node_float(mpack_node_map_cstr(mpack_node_array_at(user, i), "maxCount"));
                 }
                 // step
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "step"))
@@ -3620,7 +3620,7 @@ rfInt8 rf627_smart_read_params_callback(char* data, uint32_t data_size, uint32_t
                 // maxCount
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "maxCount"))
                 {
-                    p->arr_dbl->maxCount = mpack_node_u32(mpack_node_map_cstr(mpack_node_array_at(user, i), "maxCount"));
+                    p->arr_dbl->maxCount = mpack_node_double(mpack_node_map_cstr(mpack_node_array_at(user, i), "maxCount"));
                 }
                 // step
                 if (mpack_node_map_contains_cstr(mpack_node_array_at(user, i), "step"))
